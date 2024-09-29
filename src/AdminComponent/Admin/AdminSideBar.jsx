@@ -19,7 +19,7 @@ const menu = [
   { title: "Ingredients", icon: <FastfoodIcon />, path: "/ingredients" },
   { title: "Events", icon: <EventIcon />, path: "/event" },
   { title: "Details", icon: <AdminPanelSettingsIcon />, path: "/details" },
-  { title: "Logout", icon: <LogoutIcon />, path: "/" },
+  { title: "logout", icon: <LogoutIcon />, path: "/login" },
 ];
 
 export const AdminSideBar = ({ handleClose }) => {
