@@ -45,6 +45,8 @@ const CreateFoodCategoryForm = ({ category, onClose }) => {
   };
 
   return (
+    <>
+    <h1 style={{fontWeight:600, fontSize:25, margin:65}}>{category ? 'Update Category' : 'Create Category'}</h1>
     <form onSubmit={handleSubmit} className="space-y-4">
       <TextField
         label="Category Name"
@@ -70,6 +72,7 @@ const CreateFoodCategoryForm = ({ category, onClose }) => {
         {category ? 'Update Category' : 'Create Category'}
       </Button>
     </form>
+    </>
   );
 };
 

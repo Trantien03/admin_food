@@ -38,19 +38,19 @@ const RestaurantDetails = () => {
               <div className='space-y-4 text-gray-400'>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Owner</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>Cty TNHH mot minh tao!</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Restaurant Name</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>Food Restaurant</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Cuisine Type</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>Food restaurant</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Opening Hours</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>7:00 AM - 23:00 PM </p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Status</p>
@@ -73,19 +73,19 @@ const RestaurantDetails = () => {
               <div className='space-y-4 text-gray-400'>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Country</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>Việt Nam</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>City</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>Hà Nội</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Postal Code</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>0123456</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Street Address</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>8 Tôn Thất Thuyết</p>
                 </div>
               </div>
             </CardContent>
@@ -98,11 +98,11 @@ const RestaurantDetails = () => {
               <div className='space-y-4 text-gray-400'>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Email</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>codefood@gmail.com</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Mobile</p>
-                  <p className='text-gray-800'><span className='pr-5'>-</span>Code With ABC</p>
+                  <p className='text-gray-800'><span className='pr-5'>-</span>+84 0912345678</p>
                 </div>
                 <div className='flex'>
                   <p className='w-48 text-gray-800'>Social</p>
