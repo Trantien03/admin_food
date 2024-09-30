@@ -1,12 +1,13 @@
-import { Box, Card, CardActions, CardHeader, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
-import React from 'react'
+import { Box, Card, CardActions, CardHeader, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Modal } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import CreateIcon from '@mui/icons-material/Create';
-import { Delete } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import CreateFoodCategoryForm from './CreateFoodCategoryForm';
-import { Modal } from '@mui/material';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
-const orders=[1,1,1,1,1,1,1]
+const url = "http://localhost:8080"; // Your API base URL
+
 const style = {
   position: 'absolute',
   top: '50%',
@@ -18,65 +19,114 @@ const style = {
   boxShadow: 24,
   p: 4,
 };
-const FoodCategoryTable = () => {
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
 
-  const navigate = useNavigate();
+const FoodCategoryTable = () => {
+  const [categories, setCategories] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${url}/api/v1/categories`);
+      if (response.data) {
+        setCategories(response.data);
+      } else {
+        toast.error("Error: No categories data returned");
+      }
+    } catch (error) {
+      toast.error("Error fetching categories");
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleEdit = (category) => {
+    setSelectedCategory(category);
+    setOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${url}/api/v1/categories/${id}`);
+      toast.success("Category deleted successfully");
+      fetchCategories(); // Update list after deletion
+    } catch (error) {
+      toast.error("Failed to delete category");
+    }
+  };
+
   return (
     <div>
       <Box>
         <Card className='mt-1'>
-            <CardHeader
-             action={
-                <IconButton onClick={handleOpen} aria-label="settings">
-                  <CreateIcon />
-                </IconButton>
-              }
-            title={"Food Category"}
-            sx={{pt:2, alignItems:"center"}}
-            />
-            
-            <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell align="left">Id</TableCell>
-            <TableCell align="left">Name</TableCell>
-            
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {orders.map((row) => (
-            <TableRow
-              key={row.name}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                {1}
-              </TableCell>
-              <TableCell align="left">{"name"}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          <CardHeader
+            action={
+              <IconButton onClick={() => setOpen(true)} aria-label="settings">
+                <CreateIcon />
+              </IconButton>
+            }
+            title={"Food Categories"}
+            sx={{ pt: 2, alignItems: "center" }}
+          />
+          
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">Id</TableCell>
+                  <TableCell align="left">Image</TableCell>
+                  <TableCell align="left">Name</TableCell>
+                  <TableCell align="left">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {categories.map((category) => (
+                  <TableRow
+                    key={category.id}
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {category.id}
+                    </TableCell>
+                    <TableCell align="left">
+                      {category.image ? (
+                        <img src={`${url}/images/${category.image}`} alt={category.name} style={{ width: '50px', height: '50px' }} />
+                      ) : (
+                        <p>No Image</p>
+                      )}
+                    </TableCell>
+                    <TableCell align="left">{category.name}</TableCell>
+                    <TableCell align="left">
+                      <IconButton onClick={() => handleEdit(category)}>
+                        <CreateIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(category.id)}>
+                        {/* Replace with a delete icon as necessary */}
+                        <span><HighlightOffIcon/></span>
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Card>
 
         <Modal
-  open={open}
-  onClose={handleClose}
-  aria-labelledby="modal-modal-title"
-  aria-describedby="modal-modal-description"
->
-  <Box sx={style}>
-   <CreateFoodCategoryForm/>
-  </Box>
+          open={open}
+          onClose={() => { setOpen(false); setSelectedCategory(null); }}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <CreateFoodCategoryForm category={selectedCategory} onClose={() => { setOpen(false); fetchCategories(); }} />
+          </Box>
         </Modal>
       </Box>
     </div>
-  )
+  );
 }
 
-export default FoodCategoryTable
+export default FoodCategoryTable;
