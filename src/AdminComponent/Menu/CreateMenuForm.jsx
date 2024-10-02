@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { CircularProgress, Grid, IconButton, TextField, Button, FormControl, InputLabel, Select, OutlinedInput, Box, Chip, MenuItem } from '@mui/material';
 import { AddPhotoAlternate } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import { uploadImageToCloudinary } from '../util/UploadToCloudinary';
-import axios from 'axios'; // Import axios for making API requests
+import { toast } from 'react-toastify';
+import axios from 'axios';
+import { uploadImageToCloudinary } from '../util/UploadToCloudinary'; // Giả sử bạn đã có hàm này
 
+// Giá trị khởi tạo cho Formik
 const initialValues = {
-  name: "",
-  description: "",
-  price: "",
-  category: "",
-  restaurantId: "",
+  name: '',
+  description: '',
+  price: '',
+  category: '',
+  restaurantId: '',
   vegetarian: true,
   seasonal: false,
   ingredients: [],
@@ -19,16 +21,18 @@ const initialValues = {
 };
 
 const CreateMenuForm = () => {
-  const [uploadImage, setUploadImage] = useState(false);
+  const [uploadImage, setUploadImage] = useState(false); // Trạng thái để theo dõi quá trình upload ảnh
+  const [categories, setCategories] = useState([]); // Lưu trữ danh sách category
 
+  // Sử dụng Formik để quản lý trạng thái form
   const formik = useFormik({
     initialValues,
     onSubmit: async (values) => {
-      values.restaurantId = 2; // Set restaurant ID
-      
-      // Prepare the API endpoint and data
-      const apiUrl = 'YOUR_API_ENDPOINT_HERE'; // Replace with your actual API endpoint
-      const data = {
+      values.restaurantId = 2; // Thiết lập giá trị cố định cho restaurantId
+
+      // Chuẩn bị dữ liệu gửi API
+      const apiUrl = 'http://localhost:8080/api/v1/dishes'; // Thay đổi với endpoint thực tế của bạn
+      const formData = {
         name: values.name,
         description: values.description,
         price: values.price,
@@ -41,139 +45,170 @@ const CreateMenuForm = () => {
       };
 
       try {
-        const response = await axios.post(apiUrl, data);
-        console.log("Menu created successfully:", response.data);
-        // You can also reset the form here if needed
-        formik.resetForm();
+        const response = await axios.post(apiUrl, formData);
+        if (response.status === 201) {
+          toast.success("Menu created successfully!");
+          formik.resetForm(); // Reset lại form sau khi submit thành công
+        }
       } catch (error) {
-        console.error("Error creating menu:", error);
+        toast.error("Error creating menu. Please try again.");
       }
-    },
+    }
   });
 
+  // Hàm xử lý upload hình ảnh
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    setUploadImage(true);
-    const image = await uploadImageToCloudinary(file);
-    formik.setFieldValue("images", [...formik.values.images, image]);
-    setUploadImage(false);
+    if (file) {
+      setUploadImage(true);
+      try {
+        const imageUrl = await uploadImageToCloudinary(file); // Giả sử bạn đã có hàm này để upload lên Cloudinary
+        formik.setFieldValue('images', [...formik.values.images, imageUrl]); // Thêm ảnh vào danh sách
+        setUploadImage(false);
+      } catch (error) {
+        toast.error('Error uploading image.');
+        setUploadImage(false);
+      }
+    }
   };
 
+  // Hàm xóa ảnh khỏi danh sách
   const handleRemoveImage = (index) => {
     const updatedImages = [...formik.values.images];
     updatedImages.splice(index, 1);
-    formik.setFieldValue("images", updatedImages);
+    formik.setFieldValue('images', updatedImages);
   };
 
+  // Lấy danh sách category khi component render lần đầu
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/categories'); // API của bạn
+        setCategories(response.data); // Giả sử API trả về một danh sách category
+      } catch (error) {
+        toast.error("Error fetching categories.");
+      }
+    };
+
+    fetchCategories(); // Gọi API lấy category
+  }, []);
+
   return (
-    <div className='py-10 px-5 lg:flex items-center justify-center min-h-screen'>
-      <div className='lg:max-w-4xl'>
-        <h1 className='font-bold text-2xl text-center py-2'>
-          Add New Menu
-        </h1>
-        <form onSubmit={formik.handleSubmit} className='space-y-4'>
+    <div className="py-10 px-5 lg:flex items-center justify-center min-h-screen">
+      <div className="lg:max-w-4xl">
+        <h1 className="font-bold text-2xl text-center py-2">Add New Menu</h1>
+        <form onSubmit={formik.handleSubmit} className="space-y-4">
           <Grid container spacing={2}>
-            <Grid className='flex flex-wrap gap-5' item xs={12}>
+            {/* Upload Hình ảnh */}
+            <Grid className="flex flex-wrap gap-5" item xs={12}>
               <input
-                accept='image/*'
-                id='fileInput'
+                accept="image/*"
+                id="fileInput"
                 style={{ display: "none" }}
                 onChange={handleImageChange}
                 type="file"
               />
-              <label className='relative' htmlFor="fileInput">
-                <span className='w-24 h-24 cursor-pointer flex items-center justify p-3 border rounded-md border-gray-600'>
+              <label className="relative" htmlFor="fileInput">
+                <span className="w-24 h-24 cursor-pointer flex items-center justify-center p-3 border rounded-md border-gray-600">
                   <AddPhotoAlternate className="text-white" />
                 </span>
                 {uploadImage && (
-                  <div className='absolute left-0 right-0 top-0 bottom-0 w-24 h-24 flex justify-center items-center'>
+                  <div className="absolute left-0 right-0 top-0 bottom-0 w-24 h-24 flex justify-center items-center">
                     <CircularProgress />
                   </div>
                 )}
               </label>
-              <div className='flex flex-wrap gap-2'>
+              <div className="flex flex-wrap gap-2">
                 {formik.values.images.map((image, index) => (
                   <div key={index} className="relative">
-                    <img
-                      className='w-24 h-24 object-cover'
-                      src={image}
-                      alt=""
-                    />
+                    <img className="w-24 h-24 object-cover" src={image} alt="" />
                     <IconButton
-                      size='small'
+                      size="small"
                       sx={{
                         position: 'absolute',
                         top: 0,
                         right: 0,
-                        outline: "none",
+                        outline: 'none',
                       }}
                       onClick={() => handleRemoveImage(index)}
                     >
-                      <CloseIcon sx={{ fontSize: "1rem" }} />
+                      <CloseIcon sx={{ fontSize: '1rem' }} />
                     </IconButton>
                   </div>
                 ))}
               </div>
             </Grid>
+
+            {/* Tên sản phẩm */}
             <Grid item xs={12}>
-              <TextField fullWidth
-                id='name'
-                name='name'
-                label='Name'
-                variant='outlined'
+              <TextField
+                fullWidth
+                id="name"
+                name="name"
+                label="Name"
+                variant="outlined"
                 onChange={formik.handleChange}
-                value={formik.values.name}>
-              </TextField>
+                value={formik.values.name}
+              />
             </Grid>
+
+            {/* Mô tả sản phẩm */}
             <Grid item xs={12}>
-              <TextField fullWidth
-                id='description'
-                name='description'
-                label='Description'
-                variant='outlined'
+              <TextField
+                fullWidth
+                id="description"
+                name="description"
+                label="Description"
+                variant="outlined"
+                multiline
+                rows={4}
                 onChange={formik.handleChange}
-                value={formik.values.description}>
-              </TextField>
+                value={formik.values.description}
+              />
             </Grid>
+
+            {/* Giá sản phẩm */}
             <Grid item xs={12} lg={6}>
-              <div className="flex items-center">
-                <TextField
-                  fullWidth
-                  id="price"
-                  name="price"
-                  label="Price"
-                  variant="outlined"
-                  onChange={formik.handleChange}
-                  value={formik.values.price}
-                  type="number"
-                  className="mx-2"
-                />
-              </div>
+              <TextField
+                fullWidth
+                id="price"
+                name="price"
+                label="Price"
+                variant="outlined"
+                onChange={formik.handleChange}
+                value={formik.values.price}
+                type="number"
+              />
             </Grid>
+
+            {/* Danh mục sản phẩm */}
             <Grid item xs={12} lg={6}>
               <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">Category</InputLabel>
+                <InputLabel id="category-label">Category</InputLabel>
                 <Select
-                  labelId="demo-simple-select-label"
+                  labelId="category-label"
                   id="category"
+                  name="category"
                   value={formik.values.category}
-                  label="Category"
                   onChange={formik.handleChange}
-                  name='category'
                 >
-                  <MenuItem value={10}>Ten</MenuItem>
-                  <MenuItem value={20}>Twenty</MenuItem>
-                  <MenuItem value={30}>Thirty</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
+
+            {/* Thành phần nguyên liệu */}
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel id="ingredients">Ingredients</InputLabel>
+                <InputLabel id="ingredients-label">Ingredients</InputLabel>
                 <Select
-                  labelId="demo-multiple-chip-label"
+                  labelId="ingredients-label"
                   id="ingredients"
-                  name='ingredients'
+                  name="ingredients"
                   multiple
                   value={formik.values.ingredients}
                   onChange={formik.handleChange}
@@ -186,14 +221,16 @@ const CreateMenuForm = () => {
                     </Box>
                   )}
                 >
-                  {["pho", "mi tom"].map((name, index) => (
-                    <MenuItem key={name} value={name}>
-                      {name}
+                  {['Pho', 'Mi Tom'].map((ingredient) => (
+                    <MenuItem key={ingredient} value={ingredient}>
+                      {ingredient}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
+
+            {/* Tùy chọn cho Seasonal và Vegetarian */}
             <Grid item xs={12} lg={6}>
               <FormControl fullWidth>
                 <InputLabel id="demo-simple-select-label">Is Seasonal</InputLabel>
@@ -226,8 +263,14 @@ const CreateMenuForm = () => {
                 </Select>
               </FormControl>
             </Grid>
+
+            {/* Nút Submit */}
+            <Grid item xs={12}>
+              <Button fullWidth variant="contained" type="submit">
+                Add Menu
+              </Button>
+            </Grid>
           </Grid>
-          <Button variant="contained" color="primary" type="submit">Create Restaurant</Button>
         </form>
       </div>
     </div>

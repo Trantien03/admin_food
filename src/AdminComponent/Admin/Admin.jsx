@@ -11,6 +11,7 @@ import FoodCategory from '../FoodCategory/FoodCategory';
 import CreateRestaurantForm from '../CreateRestaurantForm/CreateRestaurantForm';
 import CreateMenuForm from '../Menu/CreateMenuForm';
 import SimpleRegistrationForm from '../Auth/SimpleRegistrationForm';
+import Table from '../Tables/Tables'
 import { UserProvider } from '../Auth/UserContext';
 
 const Admin = () => {
@@ -37,6 +38,7 @@ const Admin = () => {
                             <Route path='/add-menu' element={<CreateMenuForm />} />
                             <Route path='/login' element={<SimpleRegistrationForm />} />
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path='table' element={<Table/>} />
                         </Routes>
                     </div>
                 </div>

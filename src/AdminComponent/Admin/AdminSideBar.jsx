@@ -7,6 +7,7 @@ import FastfoodIcon from '@mui/icons-material/Fastfood';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EventIcon from '@mui/icons-material/Event';
+import TableChartIcon from "@mui/icons-material/TableChart";
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux'; 
 
@@ -19,6 +20,7 @@ const menu = [
   { title: "Ingredients", icon: <FastfoodIcon />, path: "/ingredients" },
   { title: "Events", icon: <EventIcon />, path: "/event" },
   { title: "Details", icon: <AdminPanelSettingsIcon />, path: "/details" },
+  { title: "Table",icon: <TableChartIcon/>, path:"/tables"},
   { title: "logout", icon: <LogoutIcon />, path: "/login" },
 ];
 
