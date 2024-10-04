@@ -20,7 +20,7 @@ const menu = [
   { title: "Ingredients", icon: <FastfoodIcon />, path: "/ingredients" },
   { title: "Events", icon: <EventIcon />, path: "/event" },
   { title: "Details", icon: <AdminPanelSettingsIcon />, path: "/details" },
-  { title: "Table",icon: <TableChartIcon/>, path:"/tables"},
+  { title: "Tables",icon: <TableChartIcon/>, path:"/tables"},
   { title: "logout", icon: <LogoutIcon />, path: "/login" },
 ];
 

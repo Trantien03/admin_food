@@ -10,9 +10,9 @@ import RestaurantDetails from './RestaurantDetails';
 import FoodCategory from '../FoodCategory/FoodCategory';
 import CreateRestaurantForm from '../CreateRestaurantForm/CreateRestaurantForm';
 import CreateMenuForm from '../Menu/CreateMenuForm';
-// import SimpleRegistrationForm from '../Auth/SimpleRegistrationForm';
-import Table from '../Tables/Tables'
-// import { UserProvider } from '../Auth/UserContext';
+import SimpleRegistrationForm from '../Auth/SimpleRegistrationForm';
+import Tables from '../Tables/Tables'
+import { UserProvider } from '../Auth/UserContext';
 
 const Admin = () => {
     const handleClose = () => {
@@ -20,7 +20,7 @@ const Admin = () => {
     };
 
     return (
-        // <UserProvider> {/* Đặt UserProvider bên ngoài Routes */}
+         <UserProvider> {/* Đặt UserProvider bên ngoài Routes */}
             <div>
                 <div className='lg:flex justify-between'>
                     <div>
@@ -36,14 +36,14 @@ const Admin = () => {
                             <Route path='/event' element={<Events />} />
                             <Route path='/details' element={<RestaurantDetails />} />
                             <Route path='/add-menu' element={<CreateMenuForm />} />
-                            {/* <Route path='/login' element={<SimpleRegistrationForm />} /> */}
+                            <Route path='/login' element={<SimpleRegistrationForm />} />
                             <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path='table' element={<Table/>} />
+                            <Route path='/tables' element={<Tables/>} />
                         </Routes>
                     </div>
                 </div>
             </div>
-         //</UserProvider>
+         </UserProvider>
     );
 }
 
