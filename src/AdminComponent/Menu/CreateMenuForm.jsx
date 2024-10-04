@@ -1,199 +1,227 @@
-import React, { useEffect, useState } from 'react';
-import { useFormik } from 'formik';
-import { CircularProgress, Grid, IconButton, TextField, Button, FormControl, InputLabel, Select, OutlinedInput, Box, Chip, MenuItem } from '@mui/material';
-import { AddPhotoAlternate } from '@mui/icons-material';
-import CloseIcon from '@mui/icons-material/Close';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState, useRef } from 'react';
+import { Button, TextField, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import { uploadImageToCloudinary } from '../util/UploadToCloudinary'; // Giả sử bạn đã có hàm này
+import { toast } from 'react-toastify';
+import Grid from '@mui/material/Grid';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
-// Giá trị khởi tạo cho Formik
-const initialValues = {
-  name: '',
-  description: '',
-  price: '',
-  category: '',
-  restaurantId: '',
-  vegetarian: true,
-  seasonal: false,
-  ingredients: [],
-  images: []
-};
+const url = "http://localhost:8080"; // Your API base URL
 
-const CreateMenuForm = () => {
-  const [uploadImage, setUploadImage] = useState(false); // Trạng thái để theo dõi quá trình upload ảnh
-  const [categories, setCategories] = useState([]); // Lưu trữ danh sách category
+const CreateMenuForm = ({ item, onClose = () => {} }) => {
+  const [image, setImage] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const imageInputRef = useRef(null); // For resetting image input
 
-  // Sử dụng Formik để quản lý trạng thái form
-  const formik = useFormik({
-    initialValues,
-    onSubmit: async (values) => {
-      values.restaurantId = 2; // Thiết lập giá trị cố định cho restaurantId
-
-      // Chuẩn bị dữ liệu gửi API
-      const apiUrl = 'http://localhost:8080/api/v1/dishes'; // Thay đổi với endpoint thực tế của bạn
-      const formData = {
-        name: values.name,
-        description: values.description,
-        price: values.price,
-        category: values.category,
-        restaurantId: values.restaurantId,
-        vegetarian: values.vegetarian,
-        seasonal: values.seasonal,
-        ingredients: values.ingredients,
-        images: values.images
-      };
-
-      try {
-        const response = await axios.post(apiUrl, formData);
-        if (response.status === 201) {
-          toast.success("Menu created successfully!");
-          formik.resetForm(); // Reset lại form sau khi submit thành công
-        }
-      } catch (error) {
-        toast.error("Error creating menu. Please try again.");
-      }
-    }
+  const [formValues, setFormValues] = useState({
+    name: item?.name || "",
+    description: item?.description || "",
+    price: item?.price || "",
+    category: item?.category || "",
+    discount: item?.discount || 10, // Set default discount to 10%
+    status: item?.status || "available",
   });
 
-  // Hàm xử lý upload hình ảnh
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setUploadImage(true);
+  // Fetch categories from the API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoading(true); // Start loading
       try {
-        const imageUrl = await uploadImageToCloudinary(file); // Giả sử bạn đã có hàm này để upload lên Cloudinary
-        formik.setFieldValue('images', [...formik.values.images, imageUrl]); // Thêm ảnh vào danh sách
-        setUploadImage(false);
+        const response = await axios.get(`${url}/api/v1/categories`);
+        setCategories(response.data);
       } catch (error) {
-        toast.error('Error uploading image.');
-        setUploadImage(false);
+        toast.error("Failed to load categories.");
+        console.error(error); // Log the error for debugging
+      } finally {
+        setLoading(false); // Stop loading
       }
+    };
+    fetchCategories();
+  }, []);
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "category") {
+      const selectedCategory = categories.find(cat => cat.name === value);
+      setFormValues((prevValues) => ({
+        ...prevValues,
+        category: selectedCategory ? selectedCategory.id : ""
+      }));
+    } else {
+      setFormValues((prevValues) => ({ ...prevValues, [name]: value }));
     }
   };
 
-  // Hàm xóa ảnh khỏi danh sách
-  const handleRemoveImage = (index) => {
-    const updatedImages = [...formik.values.images];
-    updatedImages.splice(index, 1);
-    formik.setFieldValue('images', updatedImages);
+  // Handle image upload
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file && ['image/jpeg', 'image/png'].includes(file.type)) {
+      setImage(file);
+    } else {
+      toast.error("Please upload a valid image file (JPEG/PNG).");
+    }
   };
 
-  // Lấy danh sách category khi component render lần đầu
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get('http://localhost:8080/api/v1/categories'); // API của bạn
-        setCategories(response.data); // Giả sử API trả về một danh sách category
-      } catch (error) {
-        toast.error("Error fetching categories.");
-      }
-    };
+  // Submit the form
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-    fetchCategories(); // Gọi API lấy category
-  }, []);
+    if (!formValues.category) {
+      toast.error("Please select a valid category.");
+      setLoading(false);
+      return;
+    }
+
+    if (item && !item.id) {
+      toast.error("Invalid item for editing.");
+      setLoading(false);
+      return;
+    }
+
+    if (!item && !image) {
+      toast.error("Please upload an image.");
+      setLoading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", formValues.name);
+    formData.append("description", formValues.description);
+    formData.append("price", Math.max(Number(formValues.price), 0)); // Ensure price is positive
+    formData.append("discount", Math.max(formValues.discount, 0)); // Ensure discount is positive
+    formData.append("status", formValues.status);
+    formData.append("category_id", formValues.category);
+
+    if (image) {
+      formData.append("image", image);
+    }
+
+    try {
+      const response = item
+        ? await axios.put(`${url}/api/v1/dishes/${item.id}`, formData)
+        : await axios.post(`${url}/api/v1/dishes`, formData);
+
+      if ([200, 201, 204].includes(response.status)) {
+        setFormValues({
+          name: "",
+          description: "",
+          price: "",
+          category: "",
+          discount: 10, // Reset discount to default on successful submission
+          status: "available",
+        });
+        setImage(null);
+        
+        // Reset file input
+        if (imageInputRef.current) {
+          imageInputRef.current.value = null;
+        }
+
+        toast.success(item ? "Menu updated successfully!" : "Menu created successfully!");
+        onClose(); // Close modal after successful submit
+      } else {
+        toast.error(response.data.message || "Error submitting the menu.");
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Error submitting the menu. Please try again.";
+      toast.error(errorMessage);
+      console.error(error.response || error); // Log error for easier debugging
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="py-10 px-5 lg:flex items-center justify-center min-h-screen">
       <div className="lg:max-w-4xl">
-        <h1 className="font-bold text-2xl text-center py-2">Add New Menu</h1>
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
+        <h1 className="font-bold text-2xl text-center py-2">
+          {item ? "Edit Menu" : "Add New Menu"}
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Grid container spacing={2}>
-            {/* Upload Hình ảnh */}
-            <Grid className="flex flex-wrap gap-5" item xs={12}>
-              <input
-                accept="image/*"
-                id="fileInput"
-                style={{ display: "none" }}
-                onChange={handleImageChange}
-                type="file"
-              />
-              <label className="relative" htmlFor="fileInput">
-                <span className="w-24 h-24 cursor-pointer flex items-center justify-center p-3 border rounded-md border-gray-600">
-                  <AddPhotoAlternate className="text-white" />
-                </span>
-                {uploadImage && (
-                  <div className="absolute left-0 right-0 top-0 bottom-0 w-24 h-24 flex justify-center items-center">
-                    <CircularProgress />
-                  </div>
-                )}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {formik.values.images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img className="w-24 h-24 object-cover" src={image} alt="" />
-                    <IconButton
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        outline: 'none',
-                      }}
-                      onClick={() => handleRemoveImage(index)}
-                    >
-                      <CloseIcon sx={{ fontSize: '1rem' }} />
-                    </IconButton>
-                  </div>
-                ))}
+            {/* Image Upload */}
+            <Grid item xs={12}>
+              <div className="flex flex-col items-center border-2 border-dashed border-gray-400 p-4 rounded-md">
+                <label className="text-center mb-2">Upload Menu Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  ref={imageInputRef} // Reference for resetting the input
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                />
+                {loading && <CircularProgress />}
               </div>
             </Grid>
 
-            {/* Tên sản phẩm */}
+            {/* Product Name */}
             <Grid item xs={12}>
               <TextField
-                fullWidth
-                id="name"
-                name="name"
                 label="Name"
+                name="name"
+                value={formValues.name}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
                 variant="outlined"
-                onChange={formik.handleChange}
-                value={formik.values.name}
+                className="bg-white"
               />
             </Grid>
 
-            {/* Mô tả sản phẩm */}
+            {/* Product Description */}
             <Grid item xs={12}>
               <TextField
-                fullWidth
-                id="description"
-                name="description"
                 label="Description"
+                name="description"
+                value={formValues.description}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
                 variant="outlined"
                 multiline
                 rows={4}
-                onChange={formik.handleChange}
-                value={formik.values.description}
+                className="bg-white"
               />
             </Grid>
 
-            {/* Giá sản phẩm */}
+            {/* Product Price */}
             <Grid item xs={12} lg={6}>
               <TextField
-                fullWidth
-                id="price"
-                name="price"
                 label="Price"
+                name="price"
+                value={formValues.price}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
                 variant="outlined"
-                onChange={formik.handleChange}
-                value={formik.values.price}
                 type="number"
+                inputProps={{ min: 0 }} // Prevent negative values
+                className="bg-white"
               />
             </Grid>
 
-            {/* Danh mục sản phẩm */}
+            {/* Product Category */}
             <Grid item xs={12} lg={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth margin="normal">
                 <InputLabel id="category-label">Category</InputLabel>
                 <Select
                   labelId="category-label"
-                  id="category"
                   name="category"
-                  value={formik.values.category}
-                  onChange={formik.handleChange}
+                  value={categories.find(cat => cat.id === formValues.category)?.name || ""}
+                  onChange={handleChange}
+                  required
                 >
                   {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
+                    <MenuItem key={category.id} value={category.name}>
                       {category.name}
                     </MenuItem>
                   ))}
@@ -201,73 +229,43 @@ const CreateMenuForm = () => {
               </FormControl>
             </Grid>
 
-            {/* Thành phần nguyên liệu */}
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="ingredients-label">Ingredients</InputLabel>
+            {/* Product Discount */}
+            <Grid item xs={12} lg={6}>
+              <TextField
+                label="Discount"
+                name="discount"
+                value={formValues.discount}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                type="number"
+                inputProps={{ min: 0 }} // Prevent negative values
+                className="bg-white"
+              />
+            </Grid>
+
+            {/* Product Status */}
+            <Grid item xs={12} lg={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="status-label">Status</InputLabel>
                 <Select
-                  labelId="ingredients-label"
-                  id="ingredients"
-                  name="ingredients"
-                  multiple
-                  value={formik.values.ingredients}
-                  onChange={formik.handleChange}
-                  input={<OutlinedInput id="ingredients" label="Ingredients" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} />
-                      ))}
-                    </Box>
-                  )}
+                  labelId="status-label"
+                  name="status"
+                  value={formValues.status}
+                  onChange={handleChange}
+                  required
                 >
-                  {['Pho', 'Mi Tom'].map((ingredient) => (
-                    <MenuItem key={ingredient} value={ingredient}>
-                      {ingredient}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="available">Available</MenuItem>
+                  <MenuItem value="unavailable">Unavailable</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
-            {/* Tùy chọn cho Seasonal và Vegetarian */}
-            <Grid item xs={12} lg={6}>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">Is Seasonal</InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="seasonal"
-                  value={formik.values.seasonal}
-                  label="Is Seasonal"
-                  onChange={formik.handleChange}
-                  name='seasonal'
-                >
-                  <MenuItem value={true}>Yes</MenuItem>
-                  <MenuItem value={false}>No</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} lg={6}>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">Is Vegetarian</InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="vegetarian"
-                  value={formik.values.vegetarian}
-                  label="Is Vegetarian"
-                  onChange={formik.handleChange}
-                  name='vegetarian'
-                >
-                  <MenuItem value={true}>Yes</MenuItem>
-                  <MenuItem value={false}>No</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Nút Submit */}
+            {/* Submit Button */}
             <Grid item xs={12}>
-              <Button fullWidth variant="contained" type="submit">
-                Add Menu
+              <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading}>
+                {loading ? <CircularProgress size={24} /> : (item ? "Update Menu" : "Create Menu")}
               </Button>
             </Grid>
           </Grid>
