@@ -48,6 +48,7 @@ const OrderTable = ({ url }) => {
             <TableHead>
               <TableRow>
                 <TableCell>Id</TableCell>
+                <TableCell align="right">Table</TableCell>
                 <TableCell align="right">Image</TableCell>
                 <TableCell align="right">Customer</TableCell>
                 <TableCell align="right">Price</TableCell>
@@ -61,6 +62,7 @@ const OrderTable = ({ url }) => {
                 orders.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell>{order._id}</TableCell>
+                    <TableCell>{order.table}</TableCell>
                     <TableCell align="right">
                       <img src={assets.parcel_icon} alt="Parcel Icon" width="50" />
                     </TableCell>

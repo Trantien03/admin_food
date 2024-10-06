@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, TextField } from '@mui/material';
+import { Button, TextField, MenuItem } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -7,20 +7,17 @@ const url = "http://localhost:8080"; // Your API base URL
 
 const CreateTableForm = ({ table, onClose }) => {
   const [nameTable, setNameTable] = useState('');
-  const [status, setStatus] = useState('Available'); // Mặc định là Available
+  const [status, setStatus] = useState('Available'); // Default is 'Available'
 
-  // Khởi tạo giá trị cho form nếu đang chỉnh sửa
+  // Initialize form values if editing
   useEffect(() => {
     if (table) {
-      setNameTable(table.nameTable);
-      setStatus(table.status);
-    } else {
-      setNameTable('');
-      setStatus('Available');
+      setNameTable(table.nameTable || ''); // Ensure there's a default value
+      setStatus(table.status || 'Available');
     }
-  }, [table]);
+  }, [table]); // Trigger whenever `table` changes
 
-  // Xử lý gửi form
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newTable = {
@@ -30,15 +27,15 @@ const CreateTableForm = ({ table, onClose }) => {
 
     try {
       if (table) {
-        // Chỉnh sửa bảng hiện có
+        // Edit existing table
         await axios.put(`${url}/api/v1/restaurantTables/${table.id}`, newTable);
         toast.success("Table updated successfully");
       } else {
-        // Tạo bảng mới
+        // Create new table
         await axios.post(`${url}/api/v1/restaurantTables`, newTable);
         toast.success("Table created successfully");
       }
-      onClose(); // Đóng modal sau khi thực hiện thành công
+      onClose(); // Close modal after successful action
     } catch (error) {
       toast.error("Error saving table");
     }
@@ -69,9 +66,9 @@ const CreateTableForm = ({ table, onClose }) => {
           variant="outlined"
           className="bg-white"
         >
-          <option value="Available">Available</option>
-          <option value="Occupied">Occupied</option>
-          <option value="Reserved">Reserved</option>
+          <MenuItem value="Available">Available</MenuItem>
+          <MenuItem value="Occupied">Occupied</MenuItem>
+          <MenuItem value="Reserved">Reserved</MenuItem>
         </TextField>
         <Button type="submit" variant="contained" color="primary" fullWidth>
           {table ? 'Update Table' : 'Create Table'}

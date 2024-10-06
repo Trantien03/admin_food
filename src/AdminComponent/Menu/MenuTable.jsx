@@ -150,7 +150,7 @@ const MenuTable = () => {
                     <TableCell align="right">{item.description || 'No description available'}</TableCell>
                     <TableCell align="right">${item.price || 'No price available'}</TableCell>
                     <TableCell align="right">{item.discount || 'No discount available'}</TableCell>
-                    <TableCell align="right">{item.status === 'available' ? 'Available' : 'Out of stock'}</TableCell>
+                    <TableCell align="right">{item.status === 'available' ? 'Available' : 'Unavailable'}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleEdit(item)}>
                         <CreateIcon />

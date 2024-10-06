@@ -4,7 +4,7 @@ import CreateIcon from '@mui/icons-material/Create';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import CreateFoodCategoryForm from './CreateFoodCategoryForm';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import DeleteIcon  from '@mui/icons-material/Delete';
 
 const url = "http://localhost:8080"; // Your API base URL
 
@@ -104,7 +104,7 @@ const FoodCategoryTable = () => {
                       </IconButton>
                       <IconButton onClick={() => handleDelete(category.id)}>
                         {/* Replace with a delete icon as necessary */}
-                        <span><HighlightOffIcon/></span>
+                        <span><DeleteIcon /></span>
                       </IconButton>
                     </TableCell>
                   </TableRow>

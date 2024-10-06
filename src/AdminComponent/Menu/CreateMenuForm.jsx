@@ -72,20 +72,16 @@ const CreateMenuForm = ({ item, onClose = () => {} }) => {
     e.preventDefault();
     setLoading(true);
 
+    // Ensure category is selected
     if (!formValues.category) {
       toast.error("Please select a valid category.");
       setLoading(false);
       return;
     }
 
-    if (item && !item.id) {
-      toast.error("Invalid item for editing.");
-      setLoading(false);
-      return;
-    }
-
-    if (!item && !image) {
-      toast.error("Please upload an image.");
+    // Ensure status is either "available" or "unavailable"
+    if (!["available", "unavailable"].includes(formValues.status)) {
+      toast.error("Invalid status value. Please select a valid status.");
       setLoading(false);
       return;
     }
@@ -95,7 +91,7 @@ const CreateMenuForm = ({ item, onClose = () => {} }) => {
     formData.append("description", formValues.description);
     formData.append("price", Math.max(Number(formValues.price), 0)); // Ensure price is positive
     formData.append("discount", Math.max(formValues.discount, 0)); // Ensure discount is positive
-    formData.append("status", formValues.status);
+    formData.append("status", formValues.status); // Ensure correct status
     formData.append("category_id", formValues.category);
 
     if (image) {
@@ -252,7 +248,7 @@ const CreateMenuForm = ({ item, onClose = () => {} }) => {
                 <Select
                   labelId="status-label"
                   name="status"
-                  value={formValues.status}
+                  value={formValues.status} // Ensure status is updated correctly
                   onChange={handleChange}
                   required
                 >
