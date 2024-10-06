@@ -79,9 +79,13 @@ const ListTables = () => {
         <br />
 
         {/* Tables Grid */}
-        <div className="grid grid-cols-4 gap-16 mx-24">
+        <div className="grid grid-cols-4 gap-16 mx-8">
           {tables.map((table) => (
-            <div key={table.id} className="relative border border-black rounded-lg p-8 h-24 text-center group">
+            <div
+              key={table.id}
+              className={`relative border border-black rounded-lg p-8 h-24 text-center group
+                ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
+            >
               <a href={`OrderItem?table=${table.nameTable}`} className="block">
                 {table.nameTable}
               </a>
