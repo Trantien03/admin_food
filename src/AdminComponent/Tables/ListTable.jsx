@@ -79,15 +79,15 @@ const ListTables = () => {
         <br />
 
         {/* Tables Grid */}
-        <div className="grid grid-cols-4 gap-16 mx-8">
+        <div className="grid grid-cols-4 gap-16 mx-24">
           {tables.map((table) => (
-            <div key={table.id} className="relative border border-black rounded-lg p-8 h-24 text-center">
+            <div key={table.id} className="relative border border-black rounded-lg p-8 h-24 text-center group">
               <a href={`OrderItem?table=${table.nameTable}`} className="block">
                 {table.nameTable}
               </a>
 
-              {/* Edit and Delete Icons */}
-              <div className="absolute top-2 right-2 flex space-x-2">
+              {/* Edit and Delete Icons - hidden by default, shown on hover */}
+              <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <IconButton onClick={() => handleEdit(table)} aria-label="edit-table" size="small">
                   <CreateIcon fontSize="small" />
                 </IconButton>
