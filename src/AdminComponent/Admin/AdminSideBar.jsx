@@ -10,18 +10,19 @@ import EventIcon from '@mui/icons-material/Event';
 import TableChartIcon from "@mui/icons-material/TableChart";
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux'; 
+import { pink, orange } from '@mui/material/colors';
 
 // Define the menu items
 const menu = [
-  { title: "Dashboard", icon: <Dashboard />, path: "/" },
-  { title: "Orders", icon: <ShoppingBag />, path: "/orders" },
-  { title: "Menu", icon: <ShopTwoIcon />, path: "/menu" },
-  { title: "Food Category", icon: <CategoryIcon />, path: "/category" },
-  { title: "Ingredients", icon: <FastfoodIcon />, path: "/ingredients" },
-  { title: "Events", icon: <EventIcon />, path: "/event" },
-  { title: "Details", icon: <AdminPanelSettingsIcon />, path: "/details" },
-  { title: "Tables",icon: <TableChartIcon/>, path:"/tables"},
-  { title: "logout", icon: <LogoutIcon />, path: "/login" },
+  { title: "Dashboard", icon: <Dashboard sx={{ color: orange[500] }} />, path: "/" },
+  { title: "Orders", icon: <ShoppingBag sx={{ color: orange[500] }} />, path: "/orders" },
+  { title: "Menu", icon: <ShopTwoIcon sx={{ color: orange[500] }}/>, path: "/menu" },
+  { title: "Food Category", icon: <CategoryIcon sx={{ color: orange[500] }}/>, path: "/category" },
+  { title: "Ingredients", icon: <FastfoodIcon sx={{ color: orange[500] }}/>, path: "/ingredients" },
+  { title: "Events", icon: <EventIcon sx={{ color: orange[500] }}/>, path: "/event" },
+  { title: "Details", icon: <AdminPanelSettingsIcon sx={{ color: orange[500] }}/>, path: "/details" },
+  { title: "Tables",icon: <TableChartIcon sx={{ color: orange[500] }}/>, path:"/tables"},
+  { title: "logout", icon: <LogoutIcon sx={{ color: orange[500] }}/>, path: "/login" },
 ];
 
 export const AdminSideBar = ({ handleClose }) => {
