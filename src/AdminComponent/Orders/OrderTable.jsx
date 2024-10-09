@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Box, Card, CardHeader, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardHeader,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import axios from 'axios';
 import { toast } from "react-toastify";
-// import { assets } from "../../assets/assets"; // Ensure assets is correctly imported
 
-const OrderTable = ({ url }) => {
-  const [orders, setOrders] = useState([]);
+const OrderTable = ({ url = `http://localhost:8080` }) => {
+  const [orderItems, setOrderItems] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const fetchAllOrders = async () => {
     try {
-      const response = await axios.get(`${url}/api/order/list`);
-      if (response.data.success) {
-        setOrders(response.data.data);
+      const response = await axios.get(`${url}/api/v1/order_item`);
+      if (response.status === 200) {
+        setOrderItems(response.data);
       } else {
         toast.error("Error fetching orders");
       }
@@ -21,14 +36,14 @@ const OrderTable = ({ url }) => {
     }
   };
 
-  const statusHandler = async (event, orderId) => {
+  const statusHandler = async (orderId, newStatus) => {
     try {
-      const response = await axios.post(`${url}/api/order/status`, {
-        orderId,
-        status: event.target.value
+      const response = await axios.patch(`${url}/api/v1/orders/${orderId}`, {
+        status: newStatus
       });
-      if (response.data.success) {
+      if (response.status === 200) {
         await fetchAllOrders();
+        setAnchorEl(null); // Đóng menu sau khi cập nhật
       }
     } catch (error) {
       toast.error("Failed to update order status");
@@ -36,8 +51,47 @@ const OrderTable = ({ url }) => {
   };
 
   useEffect(() => {
-    fetchAllOrders();
-  }, [url]); // Refetch if URL changes
+    if (url) {
+      fetchAllOrders();
+    }
+  }, [url]);
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending':
+        return { backgroundColor: '#00BFFF', color: 'white' }; // Blue
+      case 'Food Processing':
+        return { backgroundColor: '#FFA500', color: 'white' }; // Orange
+      case 'Out for delivery':
+        return { backgroundColor: '#FFD700', color: 'white' }; // Gold
+      case 'Delivered':
+        return { backgroundColor: '#32CD32', color: 'white' }; // Green
+      case 'Completed':
+        return { backgroundColor: '#800080', color: 'white' }; // Purple
+      case 'Error': // Thay đổi trạng thái nào bạn muốn có chữ màu đỏ
+        return { backgroundColor: 'transparent', color: 'red' }; // Màu chữ đỏ
+      default:
+        return { backgroundColor: '#808080', color: 'white' }; // Gray
+    }
+  };
+
+  const handleStatusClick = (event, order) => {
+    setSelectedOrder(order);
+    setAnchorEl(event.currentTarget); // Lưu vị trí nút đã nhấn
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const statuses = [
+    "Pending",
+    "Food Processing",
+    // "Out for delivery",
+    // "Delivered",
+    "Completed",
+  ];
 
   return (
     <Box>
@@ -47,55 +101,78 @@ const OrderTable = ({ url }) => {
           <Table sx={{ minWidth: 650 }} aria-label="simple table">
             <TableHead>
               <TableRow>
-                <TableCell>Id</TableCell>
-                <TableCell align="right">Table</TableCell>
-                <TableCell align="right">Image</TableCell>
-                <TableCell align="right">Customer</TableCell>
-                <TableCell align="right">Price</TableCell>
-                <TableCell align="right">Name</TableCell>
-                <TableCell align="right">Items</TableCell>
-                <TableCell align="right">Status</TableCell>
+                <TableCell align="left">Bill Number</TableCell>
+                <TableCell align="left">Table</TableCell>
+                <TableCell align="left">Image</TableCell>
+                <TableCell align="left">Customer</TableCell>
+                <TableCell align="left">Price</TableCell>
+                <TableCell align="left">Dish</TableCell>
+                <TableCell align="left">Quantity</TableCell>
+                <TableCell align="left">Status</TableCell>
+                <TableCell align="left">Update</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.length > 0 ? (
-                orders.map((order) => (
-                  <TableRow key={order._id}>
-                    <TableCell>{order._id}</TableCell>
-                    <TableCell>{order.table}</TableCell>
-                    <TableCell align="right">
-                      <img src={assets.parcel_icon} alt="Parcel Icon" width="50" />
+              {orderItems.length > 0 ? (
+                orderItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.order.billNumber}</TableCell>
+                    <TableCell align="left">{item.order.restaurantTable.nameTable}</TableCell>
+                    <TableCell align="center">
+                      <img src={`http://localhost:8080/images/${item.dish.image}`} alt={item.dish.name} width="50" />
                     </TableCell>
-                    <TableCell align="right">{order.address.firstName} {order.address.lastName}</TableCell>
-                    <TableCell align="right">${order.amount}</TableCell>
-                    <TableCell align="right">{order.items[0]?.name}</TableCell>
-                    <TableCell align="right">
-                      {order.items.map((item, index) => (
-                        <span key={index}>{item.name} x {item.quantity}{index < order.items.length - 1 ? ', ' : ''}</span>
-                      ))}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Select
-                        value={order.status}
-                        onChange={(event) => statusHandler(event, order._id)}
-                        fullWidth
+                    <TableCell align="left">{item.order.customer}</TableCell>
+                    <TableCell align="left">${item.price}</TableCell>
+                    <TableCell align="left">{item.dish.name}</TableCell>
+                    <TableCell align="center">{item.quantity}</TableCell>
+                    <TableCell align="left">
+                      <Button
+                        variant="contained"
+                        sx={{
+                          borderRadius: '20px',
+                          ...getStatusStyle(item.order.status),
+                          padding: '5px 20px',
+                        }}
                       >
-                        <MenuItem value="Food Processing">Food Processing</MenuItem>
-                        <MenuItem value="Out for delivery">Out for delivery</MenuItem>
-                        <MenuItem value="Delivered">Delivered</MenuItem>
-                      </Select>
+                        {item.order.status}
+                      </Button>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Button
+                        color="primary"
+                        onClick={(event) => handleStatusClick(event, item.order)} // Mở menu khi nhấn Update
+                      >
+                        Status
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">No orders found</TableCell>
+                  <TableCell colSpan={9} align="center">No orders found</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
       </Card>
+
+      {/* Menu cho việc chọn trạng thái */}
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleCloseMenu}
+      >
+        {statuses.map((status) => (
+          <MenuItem key={status} onClick={() => {
+            if (selectedOrder) {
+              statusHandler(selectedOrder.id, status);
+            }
+          }}>
+            {status}
+          </MenuItem>
+        ))}
+      </Menu>
     </Box>
   );
 };
