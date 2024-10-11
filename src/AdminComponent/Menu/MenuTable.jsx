@@ -93,16 +93,14 @@ const MenuTable = () => {
       // Check if the response is successful
       if (response.status === 200) {
         // Optionally, check the response data
-        if (response.data.message) {
-          alert(response.data.message); // Show success message from the response
-        } else {
-          alert('Status updated successfully');
-        }
-        fetchData(); // Call the function to refresh data after update
+        
+         
+        
+        fetchMenuList(); // Call the function to refresh data after update
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update status');
+      
     }
   };
   

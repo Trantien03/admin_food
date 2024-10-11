@@ -14,6 +14,8 @@ import SimpleRegistrationForm from '../Auth/SimpleRegistrationForm';
 import Tables from '../Tables/Tables'
 import { UserProvider } from '../Auth/UserContext';
 import OrderItem from '../Orders/OrderItem';
+import ListOrders from '../chef/ListOrders';
+import orders from '../chef/order';
 
 const Admin = () => {
     const handleClose = () => {
@@ -41,6 +43,7 @@ const Admin = () => {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path='/tables' element={<Tables/>} />
                             <Route path='/order_item' element={<OrderItem/>}/>
+                            <Route path='/chef' element={<ListOrders orders={orders} />}/>
                         </Routes>
                     </div>
                 </div>

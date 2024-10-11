@@ -85,11 +85,11 @@ const ListTables = () => {
               className={`relative border border-inherit rounded-lg p-8 h-24 text-center group
                 ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
             >
-              <a href={`order_item?table=${table.nameTable}`} className="block">
+              <a href={`orders?table=${table.nameTable}`} className="block">
                 {table.nameTable}
               </a>
 
-              {/* Edit and Delete Icons - hidden by default, shown on hover */}
+              {/* Edit and  Icons - hidden by default, shown on hover */}
               <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <IconButton onClick={() => handleEdit(table)} aria-label="edit-table" size="small">
                   <CreateIcon fontSize="small" />
