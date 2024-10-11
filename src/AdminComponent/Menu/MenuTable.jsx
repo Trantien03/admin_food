@@ -2,6 +2,7 @@ import { Box, Card, CardHeader, IconButton, Paper, Table, TableBody, TableCell, 
 import React, { useEffect, useState } from 'react';
 import CreateIcon from '@mui/icons-material/Create';
 import { Delete } from '@mui/icons-material';
+import { Select, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -82,6 +83,29 @@ const MenuTable = () => {
     }
   };
 
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const response = await axios.patch(`http://localhost:8080/api/v1/dishes/${id}`, null, {
+        params: { status: newStatus },
+      });
+  
+      // Check if the response is successful
+      if (response.status === 200) {
+        // Optionally, check the response data
+        if (response.data.message) {
+          alert(response.data.message); // Show success message from the response
+        } else {
+          alert('Status updated successfully');
+        }
+        fetchData(); // Call the function to refresh data after update
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    }
+  };
+  
   // Handle delete button click with confirmation
   const handleDeleteClick = (item) => {
     setItemToDelete(item);
@@ -162,7 +186,15 @@ const MenuTable = () => {
                     <TableCell align="right">{item.description || 'No description available'}</TableCell>
                     <TableCell align="right">${item.price || 'No price available'}</TableCell>
                     <TableCell align="right">{item.discount || 'No discount available'}</TableCell>
-                    <TableCell align="right">{item.status === 'available' ? 'Available' : 'Unavailable'}</TableCell>
+                    <TableCell align="right">
+                      <Select
+                        value={item.status}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)} // Gọi hàm khi thay đổi trạng thái
+                      >
+                        <MenuItem value="available">Available</MenuItem>
+                        <MenuItem value="unavailable">Unavailable</MenuItem>
+                      </Select>
+                    </TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleEdit(item)}>
                         <CreateIcon />

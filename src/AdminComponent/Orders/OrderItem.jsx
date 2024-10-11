@@ -1,93 +1,154 @@
-import React, { useState } from "react";
-import { Modal, Box, Typography, Button, TextField, MenuItem } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Card,
+  CardHeader,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Modal,
+  Typography,
+} from '@mui/material';
+import axios from 'axios';
+import { toast } from "react-toastify";
 
-// Styles for modal box
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-};
+const OrderItem = ({ url = `http://localhost:8080`, tableId }) => {
+  const [orderItems, setOrderItems] = useState([]); // Quản lý danh sách đơn hàng
+  const [selectedOrder, setSelectedOrder] = useState(null); // Quản lý đơn hàng được chọn
+  const [open, setOpen] = useState(false); // Trạng thái modal
 
-const OrderItem = ({ order }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Hàm để mở modal
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
+  // Hàm lấy danh sách đơn hàng từ API theo ID của bàn
+  const fetchOrdersByTable = async () => {
+    try {
+      const response = await axios.get(`${url}/api/v1/orders/nameTable?nameTable=${tableId}`);
+      if (response.status === 200) {
+        setOrderItems(response.data); // Cập nhật danh sách đơn hàng
+      } else {
+        toast.error("Error fetching orders");
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("An error occurred while fetching orders");
+    }
   };
 
-  // Hàm để đóng modal
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  // Lấy danh sách đơn hàng khi component mount
+  useEffect(() => {
+    if (url && tableId) {
+      fetchOrdersByTable(); // Gọi API để lấy các đơn hàng của bàn cụ thể
+    }
+  }, [url, tableId]);
+
+  // Hàm trả về kiểu dáng dựa trên trạng thái đơn hàng
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending':
+        return { backgroundColor: '#00BFFF', color: 'white' }; // Blue
+      case 'Food Processing':
+        return { backgroundColor: '#FFA500', color: 'white' }; // Orange
+      case 'Out for delivery':
+        return { backgroundColor: '#FFD700', color: 'white' }; // Gold
+      case 'Delivered':
+        return { backgroundColor: '#32CD32', color: 'white' }; // Green
+      case 'Completed':
+        return { backgroundColor: '#800080', color: 'white' }; // Purple
+      case 'Error':
+        return { backgroundColor: 'transparent', color: 'red' }; // Red text
+      default:
+        return { backgroundColor: '#808080', color: 'white' }; // Gray
+    }
   };
 
-  // Kiểm tra xem order có hợp lệ không
-  if (!order) {
-    return <div>Loading...</div>; // Hoặc có thể hiển thị thông báo khác
-  }
+  // Hàm mở modal để xem chi tiết đơn hàng
+  const handleOpen = (order) => {
+    setSelectedOrder(order);
+    setOpen(true);
+  };
+
+  // Hàm đóng modal
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedOrder(null);
+  };
 
   return (
-    <div>
-      <h3>{order.table}</h3>
-      <p>Status: {order.status}</p>
-      
-      {/* Button để mở modal */}
-      <button onClick={handleOpenModal}>Edit Order</button>
-      
-      {/* Modal hiển thị khi open=true */}
-      <Modal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Update Order for {order.table}
-          </Typography>
-          
-          <form>
-            {/* Input cho tên bàn */}
-            <TextField 
-              fullWidth 
-              margin="normal" 
-              label="Table Name" 
-              value={order.table} 
-              variant="outlined" 
-              disabled 
-            />
-            
-            {/* Dropdown cho trạng thái */}
-            <TextField
-              fullWidth
-              margin="normal"
-              select
-              label="Status"
-              value={order.status}
-              variant="outlined"
-            >
-              <MenuItem value="Available">Available</MenuItem>
-              <MenuItem value="Occupied">Occupied</MenuItem>
-            </TextField>
+    <Box>
+      <Card className="mt-1">
+        <CardHeader title={`Orders for Table ${tableId}`} sx={{ pt: 2, alignItems: "center" }} />
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Order ID</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Product Name</TableCell>
+                <TableCell>Total Price</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {orderItems.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.id}</TableCell>
+                  <TableCell>{order.customer}</TableCell>
+                  <TableCell style={getStatusStyle(order.status)}>{order.status}</TableCell>
+                  <TableCell>{order.totalPrice}</TableCell>
+                  <TableCell>
+                    <Button variant="contained" color="primary" onClick={() => handleOpen(order)}>
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
 
-            {/* Button để cập nhật */}
-            <Button 
-              fullWidth 
-              variant="contained" 
-              color="primary" 
-              onClick={handleCloseModal}
-            >
-              Update Order
-            </Button>
-          </form>
+      {/* Modal hiển thị chi tiết đơn hàng */}
+      <Modal open={open} onClose={handleClose}>
+        <Box sx={{ 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)', 
+          width: 400, 
+          bgcolor: 'background.paper', 
+          boxShadow: 24, 
+          p: 4 
+        }}>
+          {selectedOrder && (
+            <>
+              <Typography variant="h6" component="h2">
+                Order Details
+              </Typography>
+              <Typography sx={{ mt: 2 }}>
+                <strong>Order ID:</strong> {selectedOrder.id}
+              </Typography>
+              <Typography sx={{ mt: 2 }}>
+                <strong>Customer:</strong> {selectedOrder.customer}
+              </Typography>
+              <Typography sx={{ mt: 2 }}>
+                <strong>Status:</strong> {selectedOrder.status}
+              </Typography>
+              <Typography sx={{ mt: 2 }}>
+                <strong>Total Price:</strong> {selectedOrder.totalPrice}
+              </Typography>
+              {/* Có thể thêm thông tin chi tiết khác ở đây */}
+              <Button variant="contained" color="primary" onClick={handleClose} sx={{ mt: 2 }}>
+                Close
+              </Button>
+            </>
+          )}
         </Box>
       </Modal>
-    </div>
+    </Box>
   );
 };
 

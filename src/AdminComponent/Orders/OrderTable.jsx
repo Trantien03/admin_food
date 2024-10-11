@@ -18,15 +18,16 @@ import axios from 'axios';
 import { toast } from "react-toastify";
 
 const OrderTable = ({ url = `http://localhost:8080` }) => {
-  const [orderItems, setOrderItems] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderItems, setOrderItems] = useState([]); // Quản lý danh sách đơn hàng
+  const [anchorEl, setAnchorEl] = useState(null); // Điều khiển menu trạng thái
+  const [selectedOrder, setSelectedOrder] = useState(null); // Đơn hàng đã chọn để cập nhật
 
+  // Hàm lấy danh sách tất cả đơn hàng từ API
   const fetchAllOrders = async () => {
     try {
       const response = await axios.get(`${url}/api/v1/order_item`);
       if (response.status === 200) {
-        setOrderItems(response.data);
+        setOrderItems(response.data); // Cập nhật danh sách đơn hàng
       } else {
         toast.error("Error fetching orders");
       }
@@ -36,26 +37,32 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
     }
   };
 
+  // Hàm cập nhật trạng thái đơn hàng
   const statusHandler = async (orderId, newStatus) => {
     try {
-      const response = await axios.patch(`${url}/api/v1/orders/${orderId}`, {
-        status: newStatus
+      const response = await axios.patch(`${url}/api/v1/order_item/${orderId}`, {
+        status: newStatus,
       });
       if (response.status === 200) {
-        await fetchAllOrders();
-        setAnchorEl(null); // Đóng menu sau khi cập nhật
+        await fetchAllOrders(); // Tải lại danh sách đơn hàng sau khi cập nhật thành công
+        setAnchorEl(null); // Đóng menu
+      } else {
+        toast.error("Error updating order status");
       }
     } catch (error) {
+      console.error("Error updating order status:", error);
       toast.error("Failed to update order status");
     }
   };
 
+  // Lấy danh sách đơn hàng khi component mount
   useEffect(() => {
     if (url) {
       fetchAllOrders();
     }
   }, [url]);
 
+  // Hàm trả về kiểu dáng dựa trên trạng thái đơn hàng
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Pending':
@@ -68,28 +75,28 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
         return { backgroundColor: '#32CD32', color: 'white' }; // Green
       case 'Completed':
         return { backgroundColor: '#800080', color: 'white' }; // Purple
-      case 'Error': // Thay đổi trạng thái nào bạn muốn có chữ màu đỏ
-        return { backgroundColor: 'transparent', color: 'red' }; // Màu chữ đỏ
+      case 'Error':
+        return { backgroundColor: 'transparent', color: 'red' }; // Red text
       default:
         return { backgroundColor: '#808080', color: 'white' }; // Gray
     }
   };
 
+  // Mở menu trạng thái khi nhấn vào nút "Update"
   const handleStatusClick = (event, order) => {
     setSelectedOrder(order);
     setAnchorEl(event.currentTarget); // Lưu vị trí nút đã nhấn
   };
 
+  // Đóng menu trạng thái
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
 
-  const open = Boolean(anchorEl);
+  // Danh sách các trạng thái có thể cập nhật
   const statuses = [
     "Pending",
     "Food Processing",
-    // "Out for delivery",
-    // "Delivered",
     "Completed",
   ];
 
@@ -119,7 +126,7 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
                     <TableCell>{item.order.billNumber}</TableCell>
                     <TableCell align="left">{item.order.restaurantTable.nameTable}</TableCell>
                     <TableCell align="center">
-                      <img src={`http://localhost:8080/images/${item.dish.image}`} alt={item.dish.name} width="50" />
+                      <img src={`${url}/images/${item.dish.image}`} alt={item.dish.name} width="50" />
                     </TableCell>
                     <TableCell align="left">{item.order.customer}</TableCell>
                     <TableCell align="left">${item.price}</TableCell>
@@ -139,10 +146,9 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
                     </TableCell>
                     <TableCell align="left">
                       <Button
-                        color="primary"
                         onClick={(event) => handleStatusClick(event, item.order)} // Mở menu khi nhấn Update
                       >
-                        Status
+                        <p className="text-red-600">Status</p>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -157,10 +163,10 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
         </TableContainer>
       </Card>
 
-      {/* Menu cho việc chọn trạng thái */}
+      {/* Menu chọn trạng thái */}
       <Menu
         anchorEl={anchorEl}
-        open={open}
+        open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
       >
         {statuses.map((status) => (

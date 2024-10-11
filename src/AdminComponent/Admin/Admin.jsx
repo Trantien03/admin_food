@@ -40,7 +40,7 @@ const Admin = () => {
                             <Route path='/login' element={<SimpleRegistrationForm />} />
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path='/tables' element={<Tables/>} />
-                            <Route path='/order-item' element={<OrderItem/>}/>
+                            <Route path='/order_item' element={<OrderItem/>}/>
                         </Routes>
                     </div>
                 </div>
