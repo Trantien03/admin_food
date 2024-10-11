@@ -85,7 +85,7 @@ const ListTables = () => {
               className={`relative border border-inherit rounded-lg p-8 h-24 text-center group
                 ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
             >
-              <a href={`orders?table=${table.nameTable}`} className="block">
+              <a href={`order_item?table=${table.nameTable}`} className="block">
                 {table.nameTable}
               </a>
 
