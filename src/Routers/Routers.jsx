@@ -5,8 +5,10 @@ import AdminRoute from './AdminRoute'
 const Routers = () => {
   return (
     <Routes>
-      <Route path='/admin/restaurants/*' element={<AdminRoute/>}/>
+      {/*<Route path='/admin/restaurants/*' element={<AdminRoute/>}/>*/}
       {/* <Route path='/*' element={}/> */}
+        <Route path='/' element={<AdminRoute/>}/>
+
     </Routes>
   )
 }

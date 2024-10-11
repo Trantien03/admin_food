@@ -11,6 +11,8 @@ import {
   TableHead,
   TableRow,
   Button,
+  Modal,
+  Typography,
   Menu,
   MenuItem,
 } from "@mui/material";
@@ -19,15 +21,17 @@ import { toast } from "react-toastify";
 
 const OrderTable = ({ url = `http://localhost:8080` }) => {
   const [orderItems, setOrderItems] = useState([]); // Quản lý danh sách đơn hàng
-  const [anchorEl, setAnchorEl] = useState(null); // Điều khiển menu trạng thái
   const [selectedOrder, setSelectedOrder] = useState(null); // Đơn hàng đã chọn để cập nhật
+  const [openModal, setOpenModal] = useState(false); // Điều khiển modal
+  const [anchorEl, setAnchorEl] = useState(null); // Để mở Menu thay đổi trạng thái
+  const [currentOrderId, setCurrentOrderId] = useState(null); // Đơn hàng đang thay đổi trạng thái
 
   // Hàm lấy danh sách tất cả đơn hàng từ API
   const fetchAllOrders = async () => {
     try {
-      const response = await axios.get(`${url}/api/v1/order_item`);
+      const response = await axios.get(`${url}/api/v1/orders`);
       if (response.status === 200) {
-        setOrderItems(response.data); // Cập nhật danh sách đơn hàng
+        setOrderItems(response.data.content); // Cập nhật danh sách đơn hàng
       } else {
         toast.error("Error fetching orders");
       }
@@ -37,31 +41,21 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
     }
   };
 
-  // Hàm cập nhật trạng thái đơn hàng
-  const statusHandler = async (orderId, newStatus) => {
+  // Hàm lấy chi tiết đơn hàng theo ID
+  const fetchOrderById = async (orderId) => {
     try {
-      const token = localStorage.getItem('token'); // Hoặc nguồn khác mà bạn lưu mã thông báo
-      const response = await axios.patch(
-        `${url}/api/v1/order_item/${orderId}`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Thêm mã thông báo vào tiêu đề
-          },
-        }
-      );
+      const response = await axios.get(`${url}/api/v1/order_item/${orderId}`);
       if (response.status === 200) {
-        await fetchAllOrders();
-        setAnchorEl(null);
+        setSelectedOrder(response.data); // Lưu thông tin đơn hàng chi tiết
+        setOpenModal(true); // Mở modal
       } else {
-        toast.error("Error updating order status");
+        toast.error("Error fetching order details");
       }
     } catch (error) {
-      console.error("Error updating order status:", error);
-      toast.error("Failed to update order status");
+      console.error("Error fetching order details:", error);
+      toast.error("An error occurred while fetching order details");
     }
   };
-  
 
   // Lấy danh sách đơn hàng khi component mount
   useEffect(() => {
@@ -70,70 +64,45 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
     }
   }, [url]);
 
-  // Hàm trả về kiểu dáng dựa trên trạng thái đơn hàng
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Pending":
-        return { backgroundColor: "#00BFFF", color: "white" }; // Blue
-      case "Food Processing":
-        return { backgroundColor: "#FFA500", color: "white" }; // Orange
-      case "Out for delivery":
-        return { backgroundColor: "#FFD700", color: "white" }; // Gold
-      case "Delivered":
-        return { backgroundColor: "#32CD32", color: "white" }; // Green
-      case "Completed":
-        return { backgroundColor: "#800080", color: "white" }; // Purple
-      case "Error":
-        return { backgroundColor: "transparent", color: "red" }; // Red text
-      default:
-        return { backgroundColor: "#808080", color: "white" }; // Gray
-    }
+  // Mở modal và lấy chi tiết đơn hàng theo ID
+  const handleOpenModal = (orderId) => {
+    fetchOrderById(orderId);
   };
 
-  // Mở menu trạng thái khi nhấn vào status
-  const handleStatusClick = (event, order) => {
-    setSelectedOrder(order);
-    setAnchorEl(event.currentTarget); // Lưu vị trí nút đã nhấn
+  // Hàm đóng Modal
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedOrder(null);
   };
 
-  // Đóng menu trạng thái
+  // Hàm mở Menu trạng thái
+  const handleOpenMenu = (event, orderId) => {
+    setAnchorEl(event.currentTarget);
+    setCurrentOrderId(orderId); // Gán ID đơn hàng hiện tại
+  };
+
+  // Hàm đóng Menu trạng thái
   const handleCloseMenu = () => {
     setAnchorEl(null);
+    setCurrentOrderId(null); // Xóa ID đơn hàng hiện tại
   };
 
-  // Danh sách các trạng thái có thể cập nhật
-  const statuses = ["Pending", "Food Processing", "Completed"];
-
-  // Gộp các món ăn thành một chuỗi dạng "tên món x số lượng"
-  const renderDishes = (items) => {
-    return (
-      <p className="order-item-food">
-        {items.map((item, index) => (
-          <span key={index}>
-            {item.dish.name} x {item.quantity}
-            {index < items.length - 1 ? ", " : ""}
-          </span>
-        ))}
-      </p>
-    );
-  };
-
-  // Tích hợp BillNumber của các món thuộc cùng một bàn
-  const groupedOrders = orderItems.reduce((acc, item) => {
-    const tableId = item.order.restaurantTable.id;
-    if (!acc[tableId]) {
-      acc[tableId] = {
-        billNumber: item.order.billNumber,
-        tableName: item.order.restaurantTable.nameTable,
-        customer: item.order.customer,
-        totalPrice: item.order.totalPrice,
-        items: [],
-        status: item.order.status,
-      };
+  // Hàm cập nhật trạng thái đơn hàng
+  const handleUpdateStatus = async (status) => {
+    try {
+      const response = await axios.patch(`${url}/api/v1/orders/${currentOrderId}/status`, { status });
+      if (response.status === 200) {
+        toast.success("Order status updated successfully");
+        fetchAllOrders(); // Reload lại danh sách đơn hàng
+      } else {
+        toast.error("Error updating order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("An error occurred while updating order status");
     }
-    acc[tableId].items.push(item);
-    return acc;
-  }, {});
+    handleCloseMenu();
+  };
 
   return (
     <Box>
@@ -147,33 +116,29 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
                 <TableCell align="left">Table</TableCell>
                 <TableCell align="left">Customer</TableCell>
                 <TableCell align="left">Total Price</TableCell>
-                <TableCell align="left">Dishes</TableCell>
+                <TableCell align="left">Created At</TableCell>
                 <TableCell align="left">Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {Object.values(groupedOrders).length > 0 ? (
-                Object.values(groupedOrders).map((order, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{order.billNumber}</TableCell>
-                    <TableCell align="left">{order.tableName}</TableCell>
-                    <TableCell align="left">{order.customer}</TableCell>
-                    <TableCell align="left">${order.totalPrice}</TableCell>
-                    <TableCell
-                      align="left"
-                      sx={{ maxWidth: 250, whiteSpace: "normal", wordWrap: "break-word" }}
-                    >
-                      {renderDishes(order.items)}
-                    </TableCell>
+              {orderItems.length > 0 ? (
+                orderItems.map((order, index) => (
+                  <TableRow key={index} style={{ cursor: "pointer" }}>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.billNumber}</TableCell>
+                    <TableCell align="left" onClick={() => handleOpenModal(order.id)}>{order.restaurantTable.nameTable}</TableCell>
+                    <TableCell align="left" onClick={() => handleOpenModal(order.id)}>{order.customer}</TableCell>
+                    <TableCell align="left" onClick={() => handleOpenModal(order.id)}>${order.totalPrice}</TableCell>
+                    <TableCell align="left" onClick={() => handleOpenModal(order.id)}>{new Date(order.createAt).toLocaleString()}</TableCell>
                     <TableCell align="left">
                       <Button
                         variant="contained"
                         sx={{
                           borderRadius: "20px",
-                          ...getStatusStyle(order.status),
+                          backgroundColor: order.status === "Paid" ? "green" : "gray",
+                          color: "white",
                           padding: "5px 20px",
                         }}
-                        onClick={(event) => handleStatusClick(event, order)}
+                        onClick={(e) => handleOpenMenu(e, order.id)} // Mở Menu trạng thái
                       >
                         {order.status}
                       </Button>
@@ -182,7 +147,7 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={6} align="center">
                     No orders found
                   </TableCell>
                 </TableRow>
@@ -192,21 +157,76 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
         </TableContainer>
       </Card>
 
-      {/* Menu chọn trạng thái khi nhấn vào status */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
-        {statuses.map((status) => (
-          <MenuItem
-            key={status}
-            onClick={() => {
-              if (selectedOrder) {
-                statusHandler(selectedOrder.id, status);
-              }
-            }}
-          >
-            {status}
-          </MenuItem>
-        ))}
+      {/* Menu thay đổi trạng thái */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+      >
+        <MenuItem onClick={() => handleUpdateStatus("Pending")}>Pending</MenuItem>
+        <MenuItem onClick={() => handleUpdateStatus("Paid")}>Paid</MenuItem>
+        <MenuItem onClick={() => handleUpdateStatus("Cancelled")}>Cancelled</MenuItem>
       </Menu>
+
+      {/* Modal hiển thị chi tiết đơn hàng */}
+      {selectedOrder && (
+        <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4 md:mx-auto overflow-y-auto max-h-[100vh]">
+              <h2 className="text-xl font-bold mb-4 text-center" id="modal-modal-title">
+                Bill: {selectedOrder[0]?.order.billNumber}
+              </h2>
+
+              <div className="mb-4">
+                <p><strong>Customer:</strong> {selectedOrder[0]?.order.customer}</p>
+                <p><strong>Table:</strong> {selectedOrder[0]?.order.restaurantTable.nameTable}</p>
+                <p>
+                  <strong>Coupon:</strong> {selectedOrder[0]?.order.coupon ? selectedOrder[0]?.order.coupon.name : "None"}
+                </p>
+                <p><strong>Payment:</strong> {selectedOrder[0]?.order.payment}</p>
+                <p><strong>Original Price:</strong> ${selectedOrder[0]?.order.originalPrice}</p>
+                <p><strong>Total Discount:</strong> ${selectedOrder[0]?.order.totalDiscount}</p>
+                <p><strong>Total Price:</strong> ${selectedOrder[0]?.order.totalPrice}</p>
+              </div>
+
+              <h3 className="text-lg font-semibold mb-2">Ordered Dishes:</h3>
+              <div className="flex flex-col gap-4">
+                {selectedOrder.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center border-b border-gray-200 pb-2"
+                  >
+                    <img
+                      src={`http://localhost:8080/images/${item.dish.image}`}
+                      alt={item.dish.name}
+                      className="w-16 h-16 rounded-lg object-cover mr-4"
+                    />
+                    <div>
+                      <p className="font-semibold">{item.dish.name}</p>
+                      <p className="text-gray-600">Quantity: {item.quantity}</p>
+                    </div>
+                    <p className="ml-auto font-semibold">${item.dish.price}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end mt-6">
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+                    onClick={handleCloseModal}
+                  >
+                    Close
+                  </button>
+                </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Box>
   );
 };
