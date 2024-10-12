@@ -1,23 +1,26 @@
-import { Box, Card, CardHeader, IconButton } from '@mui/material';
+import { Box, Card, CardHeader, IconButton, Typography, Fade, Backdrop } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import CreateIcon from '@mui/icons-material/Create';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import TableBarIcon from '@mui/icons-material/TableBar';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Modal from '@mui/material/Modal';
 import CreateTableForm from './CreateTableForm';
-import OrderItem from '../Orders/OrderItem'; // Import component OrderItem
+import OrderItem from '../Orders/OrderItem';
 
-const url = "http://localhost:8080"; // Your API base URL
+const url = "http://localhost:8080";
 
-const style = {
+const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: '100%',
+  maxWidth: 500,
   bgcolor: 'background.paper',
-  border: '2px solid inherit',
+  borderRadius: '8px',
   boxShadow: 24,
   p: 4,
 };
@@ -26,7 +29,7 @@ const ListTables = () => {
   const [tables, setTables] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [showOrders, setShowOrders] = useState(false); // Quản lý trạng thái hiển thị đơn hàng
+  const [showOrders, setShowOrders] = useState(false);
 
   // Fetch tables from API
   const fetchTables = async () => {
@@ -48,80 +51,110 @@ const ListTables = () => {
 
   // Handle viewing orders for a specific table
   const handleViewOrders = (table) => {
-    setSelectedTable(table.nameTable); // Chọn bàn để hiển thị đơn hàng
-    setShowOrders(true); // Hiển thị danh sách đơn hàng
+    setSelectedTable(table.nameTable);
+    setShowOrders(true);
   };
 
   const handleBack = () => {
     setShowOrders(false);
-    setSelectedTable(null); // Reset selected table
+    setSelectedTable(null);
+  };
+
+  // Handle delete table
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${url}/api/v1/restaurantTables/${id}`);
+      fetchTables();
+      toast.success("Table deleted successfully");
+    } catch (error) {
+      toast.error("Error deleting table");
+    }
+  };
+
+  // Handle edit table
+  const handleEdit = (table) => {
+    setSelectedTable(table);
+    setOpen(true);
   };
 
   return (
-    <Box>
+    <Box sx={{ p: 2, bgcolor: '#f0f4f7', minHeight: '100vh' }}>
       {!showOrders ? (
-        <Card className="mt-1">
+        <Card sx={{ mt: 2, p: 3, bgcolor: '#ffffff', boxShadow: 3 }}>
           <CardHeader
             action={
               <IconButton onClick={() => setOpen(true)} aria-label="add-table">
-                <CreateIcon />
+                <AddCircleIcon sx={{ fontSize: 35, color: '#1976d2' }} />
               </IconButton>
             }
-            title={"Restaurant Tables"}
-            sx={{ pt: 5, alignItems: "center", textAlign: "center" }}
+            title={
+              <Typography variant="h5" align="center" sx={{ fontWeight: 'bold', color: '#333' }}>
+                Restaurant Tables
+              </Typography>
+            }
           />
-          <br />
-          <br />
-          <br />
-
-          {/* Tables Grid */}
-          <div className="grid grid-cols-4 gap-16 mx-8">
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, mt: 4 }}>
             {tables.map((table) => (
-              <div
+              <Box
                 key={table.id}
-                className={`relative border border-inherit rounded-lg p-8 h-24 text-center group
-                  ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
-                onClick={() => handleViewOrders(table)} // Khi click vào bàn, xem các đơn hàng
+                sx={{
+                  position: 'relative',
+                  borderRadius: 2,
+                  p: 2,
+                  textAlign: 'center',
+                  bgcolor: table.status === 'Available' ? '#b2dfdb' : '#ef9a9a',
+                  transition: 'transform 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    boxShadow: 5,
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleViewOrders(table)}
               >
-                <span className="block">{table.nameTable}</span>
-
-                {/* Edit and Icons - hidden by default, shown on hover */}
-                <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <IconButton onClick={() => handleEdit(table)} aria-label="edit-table" size="small">
-                    <CreateIcon fontSize="small" />
+                <TableBarIcon sx={{ fontSize: 60, color: '#ffffff' }} />
+                <Typography variant="h6" sx={{ color: '#fff', fontWeight: 'bold' }}>
+                  {table.nameTable}
+                </Typography>
+                <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 1 }}>
+                  <IconButton onClick={() => handleEdit(table)} size="small">
+                    <EditIcon sx={{ fontSize: 20, color: '#fff' }} />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(table.id)} aria-label="delete-table" size="small">
-                    <HighlightOffIcon fontSize="small" />
+                  <IconButton onClick={() => handleDelete(table.id)} size="small">
+                    <DeleteIcon sx={{ fontSize: 20, color: '#fff' }} />
                   </IconButton>
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
         </Card>
       ) : (
-        // Hiển thị danh sách đơn hàng cho bàn đã chọn
         <OrderItem selectedTable={selectedTable} onBack={handleBack} />
       )}
 
-      {/* Modal for Adding/Editing a Table */}
       <Modal
         open={open}
         onClose={() => {
           setOpen(false);
           setSelectedTable(null);
         }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
       >
-        <Box sx={style}>
-          <CreateTableForm
-            table={selectedTable}
-            onClose={() => {
-              setOpen(false);
-              fetchTables();
-            }}
-          />
-        </Box>
+        <Fade in={open}>
+          <Box sx={modalStyle}>
+            <CreateTableForm
+              table={selectedTable}
+              onClose={() => {
+                setOpen(false);
+                fetchTables();
+              }}
+            />
+          </Box>
+        </Fade>
       </Modal>
     </Box>
   );
