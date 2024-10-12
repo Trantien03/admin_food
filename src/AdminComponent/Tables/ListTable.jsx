@@ -6,6 +6,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import Modal from '@mui/material/Modal';
 import CreateTableForm from './CreateTableForm';
+import OrderItem from '../Orders/OrderItem'; // Import component OrderItem
 
 const url = "http://localhost:8080"; // Your API base URL
 
@@ -25,6 +26,7 @@ const ListTables = () => {
   const [tables, setTables] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [showOrders, setShowOrders] = useState(false); // Quản lý trạng thái hiển thị đơn hàng
 
   // Fetch tables from API
   const fetchTables = async () => {
@@ -44,64 +46,62 @@ const ListTables = () => {
     fetchTables();
   }, []);
 
-  // Handle editing table
-  const handleEdit = (table) => {
-    setSelectedTable(table);
-    setOpen(true); // Open modal for editing
+  // Handle viewing orders for a specific table
+  const handleViewOrders = (table) => {
+    setSelectedTable(table.nameTable); // Chọn bàn để hiển thị đơn hàng
+    setShowOrders(true); // Hiển thị danh sách đơn hàng
   };
 
-  // Handle deleting table
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${url}/api/v1/restaurantTables/${id}`);
-      toast.success("Table deleted successfully");
-      fetchTables(); // Refresh tables after deletion
-    } catch (error) {
-      toast.error("Failed to delete table");
-    }
+  const handleBack = () => {
+    setShowOrders(false);
+    setSelectedTable(null); // Reset selected table
   };
 
   return (
     <Box>
-      <Card className="mt-1">
-        <CardHeader
-          action={
-            <IconButton onClick={() => setOpen(true)} aria-label="add-table">
-              <CreateIcon />
-            </IconButton>
-          }
-          title={"Restaurant Tables"}
-          sx={{ pt: 5, alignItems: "center", textAlign: "center" }}
-        />
-        <br />
-        <br />
-        <br />
+      {!showOrders ? (
+        <Card className="mt-1">
+          <CardHeader
+            action={
+              <IconButton onClick={() => setOpen(true)} aria-label="add-table">
+                <CreateIcon />
+              </IconButton>
+            }
+            title={"Restaurant Tables"}
+            sx={{ pt: 5, alignItems: "center", textAlign: "center" }}
+          />
+          <br />
+          <br />
+          <br />
 
-        {/* Tables Grid */}
-        <div className="grid grid-cols-4 gap-16 mx-8">
-          {tables.map((table) => (
-            <div
-              key={table.id}
-              className={`relative border border-inherit rounded-lg p-8 h-24 text-center group
-                ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
-            >
-              <a href={`order_item?table=${table.nameTable}`} className="block">
-                {table.nameTable}
-              </a>
+          {/* Tables Grid */}
+          <div className="grid grid-cols-4 gap-16 mx-8">
+            {tables.map((table) => (
+              <div
+                key={table.id}
+                className={`relative border border-inherit rounded-lg p-8 h-24 text-center group
+                  ${table.status === 'Available' ? 'bg-green-400' : 'bg-red-400'}`}
+                onClick={() => handleViewOrders(table)} // Khi click vào bàn, xem các đơn hàng
+              >
+                <span className="block">{table.nameTable}</span>
 
-              {/* Edit and  Icons - hidden by default, shown on hover */}
-              <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <IconButton onClick={() => handleEdit(table)} aria-label="edit-table" size="small">
-                  <CreateIcon fontSize="small" />
-                </IconButton>
-                <IconButton onClick={() => handleDelete(table.id)} aria-label="delete-table" size="small">
-                  <HighlightOffIcon fontSize="small" />
-                </IconButton>
+                {/* Edit and Icons - hidden by default, shown on hover */}
+                <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <IconButton onClick={() => handleEdit(table)} aria-label="edit-table" size="small">
+                    <CreateIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton onClick={() => handleDelete(table.id)} aria-label="delete-table" size="small">
+                    <HighlightOffIcon fontSize="small" />
+                  </IconButton>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      ) : (
+        // Hiển thị danh sách đơn hàng cho bàn đã chọn
+        <OrderItem selectedTable={selectedTable} onBack={handleBack} />
+      )}
 
       {/* Modal for Adding/Editing a Table */}
       <Modal

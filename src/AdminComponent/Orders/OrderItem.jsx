@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardHeader,
+  Divider,
+  List,
+  ListItem,
+  Modal,
   Paper,
   Table,
   TableBody,
@@ -10,170 +15,134 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Button,
+  Typography,
   Menu,
   MenuItem,
-  Select
 } from '@mui/material';
 import axios from 'axios';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 
-const OrderItem = ({ url = `http://localhost:8080` }) => {
-  const [orderItems, setOrderItems] = useState([]); // Quản lý danh sách đơn hàng
-  const [anchorEl, setAnchorEl] = useState(null); // Điều khiển menu trạng thái
-  const [selectedOrder, setSelectedOrder] = useState(null); // Đơn hàng đã chọn để cập nhật
+const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => {
+  const [orderItems, setOrderItems] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
 
-  // Hàm lấy danh sách tất cả đơn hàng từ API
-  const fetchAllOrders = async (tableName) => { // Nhận tableName như một tham số
-    
+  // Hàm lấy tất cả đơn hàng
+  const fetchAllOrders = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/orders/nameTable`, {
-        params: { nameTable: b2 }, // Truyền tham số nameTable
-      });
-  
+      const response = await axios.get(`${url}/api/v1/orders`);
+      console.log("Fetched Orders:", response.data.content); // Kiểm tra dữ liệu
       if (response.status === 200) {
-        console.log(response.data);
-        setOrderItems(response.data); // Cập nhật danh sách đơn hàng
+        setOrderItems(response.data.content);
       } else {
         toast.error("Error fetching orders");
       }
     } catch (error) {
-      console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+      console.error("Error fetching orders:", error);
       toast.error("An error occurred while fetching orders");
     }
   };
-  
 
-  // Hàm cập nhật trạng thái đơn hàng
-  const handleStatusChange = async (id, newStatus) => {
-    try {
-      const response = await axios.patch(`http://localhost:8080/api/v1/orders/${id}`, null, {
-        params: { status: newStatus },
-      });
-  
-      // Check if the response is successful
-      if (response.status === 200) {
-        // Optionally, check the response data
-        
-         
-        
-        fetchAllOrders();
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      
-    }
-  };
-
-  // Lấy danh sách đơn hàng khi component mount
   useEffect(() => {
-    if (url) {
-      fetchAllOrders();
-    }
+    fetchAllOrders();
   }, [url]);
 
-  // Hàm trả về kiểu dáng dựa trên trạng thái đơn hàng
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Pending':
-        return { backgroundColor: '#00BFFF', color: 'white' }; // Blue
-      case 'Food Processing':
-        return { backgroundColor: '#FFA500', color: 'white' }; // Orange
-      case 'Out for delivery':
-        return { backgroundColor: '#FFD700', color: 'white' }; // Gold
-      case 'Delivered':
-        return { backgroundColor: '#32CD32', color: 'white' }; // Green
-      case 'Completed':
-        return { backgroundColor: '#800080', color: 'white' }; // Purple
-      case 'Error':
-        return { backgroundColor: 'transparent', color: 'red' }; // Red text
-      default:
-        return { backgroundColor: '#808080', color: 'white' }; // Gray
+  const filteredOrders = selectedTable
+    ? orderItems.filter((order) => order.restaurantTable.nameTable === selectedTable)
+    : [];
+  
+  console.log("Filtered Orders:", filteredOrders); // Kiểm tra danh sách đơn hàng đã lọc
+
+  const handleOpenModal = (orderId) => {
+    const order = filteredOrders.find((order) => order.id === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setOpenModal(true);
     }
   };
 
-  // Mở menu trạng thái khi nhấn vào nút "Update"
-  const handleStatusClick = (event, order) => {
-    setSelectedOrder(order);
-    setAnchorEl(event.currentTarget); // Lưu vị trí nút đã nhấn
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedOrder(null);
   };
 
-  // Đóng menu trạng thái
+  const handleOpenMenu = (event, orderId) => {
+    setAnchorEl(event.currentTarget);
+    setCurrentOrderId(orderId);
+  };
+
   const handleCloseMenu = () => {
     setAnchorEl(null);
+    setCurrentOrderId(null);
   };
 
-  // Danh sách các trạng thái có thể cập nhật
-  const statuses = [
-    "Pending",
-    "Food Processing",
-    "Completed",
-  ];
+  const handleUpdateStatus = async (status) => {
+    try {
+      const response = await axios.patch(`${url}/api/v1/orders/${currentOrderId}`, null, {
+        params: { status }
+      });
+      if (response.status === 200) {
+        toast.success("Order status updated successfully");
+        fetchAllOrders();
+      } else {
+        toast.error("Error updating order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("An error occurred while updating order status");
+    }
+    handleCloseMenu();
+  };
 
   return (
     <Box>
       <Card className="mt-1">
-        <CardHeader title={"All Orders"} sx={{ pt: 2, alignItems: "center" }} />
+        <CardHeader
+          title={`Order Items for ${selectedTable}`}
+          action={<Button onClick={onBack} variant="outlined" color="primary">Back</Button>}
+        />
         <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <Table sx={{ minWidth: 650, minHeight: 400 }} aria-label="simple table">
             <TableHead>
               <TableRow>
                 <TableCell align="left">Bill Number</TableCell>
                 <TableCell align="left">Table</TableCell>
-                
                 <TableCell align="left">Customer</TableCell>
-                <TableCell align="left">Price</TableCell>
-                {/* <TableCell align="left">Dish</TableCell>
-                <TableCell align="left">Quantity</TableCell> */}
+                <TableCell align="left">Total Price</TableCell>
                 <TableCell align="left">Status</TableCell>
-                
               </TableRow>
             </TableHead>
             <TableBody>
-              {orderItems.length > 0 ? (
-                orderItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.billNumber}</TableCell>
-                    <TableCell align="left">{item.restaurantTable.nameTable}</TableCell>
-                    
-                    <TableCell align="left">{item.customer}</TableCell>
-                    <TableCell align="left">{item.totalPrice}</TableCell>
-
-                    <TableCell align="right">
-                      <Select
-                        value={item.status}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)} // Gọi hàm khi thay đổi trạng thái
-                      >
-                        <MenuItem value="PendingPayment">Pending Payment</MenuItem>
-                        <MenuItem value="Paid">Paid</MenuItem>
-                        <MenuItem value="Pending">Pending</MenuItem>
-                      </Select>
-                    </TableCell>
-
-                    {/* <TableCell align="left">
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
+                  <TableRow key={order.id} style={{ cursor: "pointer" }}>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.billNumber}</TableCell>
+                    <TableCell>{order.restaurantTable.nameTable}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    <TableCell>{order.totalPrice} VND</TableCell>
+                    <TableCell>
                       <Button
                         variant="contained"
-                        sx={{
-                          borderRadius: '20px',
-                          ...getStatusStyle(item.order.status),
-                          padding: '5px 20px',
-                        }}
+                        color="primary"
+                        aria-controls="status-menu"
+                        aria-haspopup="true"
+                        onClick={(event) => handleOpenMenu(event, order.id)}
                       >
-                        {item.order.status}
+                        {order.status}
                       </Button>
-                    </TableCell> */}
-                    {/* <TableCell align="left">
-                      <Button
-                        onClick={(event) => handleStatusClick(event, item.order)} // Mở menu khi nhấn Update
-                      >
-                        <p className="text-red-600">Status</p>
-                      </Button>
-                    </TableCell> */}
+                      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
+                        <MenuItem onClick={() => handleUpdateStatus("Pending")}>Pending</MenuItem>
+                        <MenuItem onClick={() => handleUpdateStatus("Paid")}>Paid</MenuItem>
+                        <MenuItem onClick={() => handleUpdateStatus("PendingPayment")}>Pending Payment</MenuItem>
+                      </Menu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">No orders found</TableCell>
+                  <TableCell colSpan={5} align="center">No orders available</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -181,22 +150,57 @@ const OrderItem = ({ url = `http://localhost:8080` }) => {
         </TableContainer>
       </Card>
 
-      {/* Menu chọn trạng thái */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
+      {/* Modal để xem chi tiết đơn hàng */}
+      <Modal
+        open={openModal}
+        onClose={handleCloseModal}
+        aria-labelledby="order-details-modal-title"
+        aria-describedby="order-details-modal-description"
       >
-        {statuses.map((status) => (
-          <MenuItem key={status} onClick={() => {
-            if (selectedOrder) {
-              statusHandler(selectedOrder.id, status);
-            }
-          }}>
-            {status}
-          </MenuItem>
-        ))}
-      </Menu>
+        <Box sx={{ padding: 4, bgcolor: 'white', borderRadius: 2, boxShadow: 3, maxWidth: 500, maxHeight: 500, margin: 'auto', marginTop: 15 }}>
+          <Typography variant="h5" id="order-details-modal-title" align="center">
+            Bill: {selectedOrder?.billNumber}
+          </Typography>
+          <Divider sx={{ marginY: 2 }} />
+          <Typography variant="subtitle1">Customer: {selectedOrder?.customer}</Typography>
+          <Typography variant="subtitle1">Table: {selectedOrder?.restaurantTable?.nameTable}</Typography>
+          <Typography variant="subtitle1">Coupon: {selectedOrder?.coupon || "None"}</Typography>
+          <Typography variant="subtitle1">Payment: {selectedOrder?.paymentMethod}</Typography>
+          <Typography variant="subtitle1">Original Price: {selectedOrder?.originalPrice} VND</Typography>
+          <Typography variant="subtitle1">Total Discount: {selectedOrder?.totalDiscount} VND</Typography>
+          <Typography variant="subtitle1">Total Price: {selectedOrder?.totalPrice} VND</Typography>
+          <Divider sx={{ marginY: 2 }} />
+          <h3 className="text-lg font-semibold mb-2">Ordered Dishes:</h3>
+          <div className="flex flex-col gap-4">
+            {selectedOrder?.orderedDishes && selectedOrder.orderedDishes.map((item, index) => ( // Changed to use orderedDishes
+              <div
+                key={index}
+                className="flex items-center border-b border-gray-200 pb-2"
+              >
+                <img
+                  src={`http://localhost:8080/images/${item.dish.image}`}
+                  alt={item.dish.name}
+                  className="w-16 h-16 rounded-lg object-cover mr-4"
+                />
+                <div>
+                  <p className="font-semibold">{item.dish.name}</p>
+                  <p className="text-gray-600">Quantity: {item.quantity}</p>
+                </div>
+                <p className="ml-auto font-semibold">{item.dish.price} VND</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+              onClick={handleCloseModal}
+            >
+              Close
+            </button>
+          </div>
+        </Box>
+      </Modal>
     </Box>
   );
 };

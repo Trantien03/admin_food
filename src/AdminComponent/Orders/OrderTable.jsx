@@ -158,14 +158,10 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
       </Card>
 
       {/* Menu thay đổi trạng thái */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
         <MenuItem onClick={() => handleUpdateStatus("Pending")}>Pending</MenuItem>
         <MenuItem onClick={() => handleUpdateStatus("Paid")}>Paid</MenuItem>
-        <MenuItem onClick={() => handleUpdateStatus("Cancelled")}>Cancelled</MenuItem>
+        <MenuItem onClick={() => handleUpdateStatus("PendingPayment")}>Pending Payment</MenuItem>
       </Menu>
 
       {/* Modal hiển thị chi tiết đơn hàng */}
