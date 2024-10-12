@@ -6,7 +6,6 @@ import {
   CardHeader,
   Divider,
   List,
-  ListItem,
   Modal,
   Paper,
   Table,
@@ -46,13 +45,15 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
   };
 
   useEffect(() => {
-    fetchAllOrders();
+    if (url) {
+      fetchAllOrders();
+    }
   }, [url]);
 
   const filteredOrders = selectedTable
     ? orderItems.filter((order) => order.restaurantTable.nameTable === selectedTable)
     : [];
-  
+
   console.log("Filtered Orders:", filteredOrders); // Kiểm tra danh sách đơn hàng đã lọc
 
   const handleOpenModal = (orderId) => {
@@ -81,7 +82,7 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
   const handleUpdateStatus = async (status) => {
     try {
       const response = await axios.patch(`${url}/api/v1/orders/${currentOrderId}`, null, {
-        params: { status }
+        params: { status },
       });
       if (response.status === 200) {
         toast.success("Order status updated successfully");
@@ -119,9 +120,9 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
                 filteredOrders.map((order) => (
                   <TableRow key={order.id} style={{ cursor: "pointer" }}>
                     <TableCell onClick={() => handleOpenModal(order.id)}>{order.billNumber}</TableCell>
-                    <TableCell>{order.restaurantTable.nameTable}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell>{order.totalPrice} VND</TableCell>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.restaurantTable.nameTable}</TableCell>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.customer}</TableCell>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.totalPrice} VND</TableCell>
                     <TableCell>
                       <Button
                         variant="contained"
@@ -151,56 +152,65 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
       </Card>
 
       {/* Modal để xem chi tiết đơn hàng */}
-      <Modal
-        open={openModal}
-        onClose={handleCloseModal}
-        aria-labelledby="order-details-modal-title"
-        aria-describedby="order-details-modal-description"
-      >
-        <Box sx={{ padding: 4, bgcolor: 'white', borderRadius: 2, boxShadow: 3, maxWidth: 500, maxHeight: 500, margin: 'auto', marginTop: 15 }}>
-          <Typography variant="h5" id="order-details-modal-title" align="center">
-            Bill: {selectedOrder?.billNumber}
-          </Typography>
-          <Divider sx={{ marginY: 2 }} />
-          <Typography variant="subtitle1">Customer: {selectedOrder?.customer}</Typography>
-          <Typography variant="subtitle1">Table: {selectedOrder?.restaurantTable?.nameTable}</Typography>
-          <Typography variant="subtitle1">Coupon: {selectedOrder?.coupon || "None"}</Typography>
-          <Typography variant="subtitle1">Payment: {selectedOrder?.paymentMethod}</Typography>
-          <Typography variant="subtitle1">Original Price: {selectedOrder?.originalPrice} VND</Typography>
-          <Typography variant="subtitle1">Total Discount: {selectedOrder?.totalDiscount} VND</Typography>
-          <Typography variant="subtitle1">Total Price: {selectedOrder?.totalPrice} VND</Typography>
-          <Divider sx={{ marginY: 2 }} />
-          <h3 className="text-lg font-semibold mb-2">Ordered Dishes:</h3>
-          <div className="flex flex-col gap-4">
-            {selectedOrder?.orderedDishes && selectedOrder.orderedDishes.map((item, index) => ( // Changed to use orderedDishes
-              <div
-                key={index}
-                className="flex items-center border-b border-gray-200 pb-2"
-              >
-                <img
-                  src={`http://localhost:8080/images/${item.dish.image}`}
-                  alt={item.dish.name}
-                  className="w-16 h-16 rounded-lg object-cover mr-4"
-                />
-                <div>
-                  <p className="font-semibold">{item.dish.name}</p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                </div>
-                <p className="ml-auto font-semibold">{item.dish.price} VND</p>
-              </div>
-            ))}
-          </div>
+      {selectedOrder && (
+        <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4 md:mx-auto overflow-y-auto max-h-[100vh]">
+              <h2 className="text-xl font-bold mb-4 text-center" id="modal-modal-title">
+                Bill: {selectedOrder.billNumber}
+              </h2>
 
-          <div className="flex justify-end mt-6">
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
-              onClick={handleCloseModal}
-            >
-              Close
-            </button>
+              <div className="mb-4">
+                <p><strong>Customer:</strong> {selectedOrder.customer}</p>
+                <p><strong>Table:</strong> {selectedOrder.restaurantTable.nameTable}</p>
+                <p>
+                  <strong>Coupon:</strong> {selectedOrder.coupon ? selectedOrder.coupon.name : "None"}
+                </p>
+                <p><strong>Payment:</strong> {selectedOrder.payment}</p>
+                <p><strong>Original Price:</strong> ${selectedOrder.originalPrice}</p>
+                <p><strong>Total Discount:</strong> ${selectedOrder.totalDiscount}</p>
+                <p><strong>Total Price:</strong> ${selectedOrder.totalPrice}</p>
+              </div>
+
+              <h3 className="text-lg font-semibold mb-2">Ordered Dishes:</h3>
+              <div className="flex flex-col gap-4">
+                {Array.isArray(selectedOrder.orderItems) && selectedOrder.orderItems.length > 0 ? (
+                  selectedOrder.orderItems.map((item, index) => (
+                    <div key={index} className="flex items-center border-b border-gray-200 pb-2">
+                      <img
+                        src={`http://localhost:8080/images/${item.dish.image}`}
+                        alt={item.dish.name}
+                        className="w-16 h-16 rounded-lg object-cover mr-4"
+                      />
+                      <div>
+                        <p className="font-semibold">{item.dish.name}</p>
+                        <p className="text-gray-600">Quantity: {item.quantity}</p>
+                      </div>
+                      <p className="ml-auto font-semibold">${item.dish.price}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No items found in this order.</p>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
-        </Box>
-      </Modal>
+        </Modal>
+      )}
     </Box>
   );
 };
