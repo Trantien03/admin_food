@@ -122,14 +122,29 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
                     <TableCell onClick={() => handleOpenModal(order.id)}>{order.billNumber}</TableCell>
                     <TableCell onClick={() => handleOpenModal(order.id)}>{order.restaurantTable.nameTable}</TableCell>
                     <TableCell onClick={() => handleOpenModal(order.id)}>{order.customer}</TableCell>
-                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.totalPrice} VND</TableCell>
+                    <TableCell onClick={() => handleOpenModal(order.id)}>{order.totalPrice} $</TableCell>
                     <TableCell>
                       <Button
                         variant="contained"
-                        color="primary"
+                        color={
+                          order.status === "Paid"
+                            ? "success"
+                            : order.status === "Pending"
+                            ? "warning"
+                            : "info"
+                        }
                         aria-controls="status-menu"
                         aria-haspopup="true"
                         onClick={(event) => handleOpenMenu(event, order.id)}
+                        startIcon={
+                          order.status === "Paid" ? (
+                            <i className="fas fa-check" /> // Biểu tượng cho "Paid"
+                          ) : order.status === "Pending" ? (
+                            <i className="fas fa-hourglass-half" /> // Biểu tượng cho "Pending"
+                          ) : (
+                            <i className="fas fa-clock" /> // Biểu tượng cho "PendingPayment"
+                          )
+                        }
                       >
                         {order.status}
                       </Button>
@@ -164,13 +179,10 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
               <h2 className="text-xl font-bold mb-4 text-center" id="modal-modal-title">
                 Bill: {selectedOrder.billNumber}
               </h2>
-
               <div className="mb-4">
                 <p><strong>Customer:</strong> {selectedOrder.customer}</p>
                 <p><strong>Table:</strong> {selectedOrder.restaurantTable.nameTable}</p>
-                <p>
-                  <strong>Coupon:</strong> {selectedOrder.coupon ? selectedOrder.coupon.name : "None"}
-                </p>
+                <p><strong>Coupon:</strong> {selectedOrder.coupon ? selectedOrder.coupon.name : "None"}</p>
                 <p><strong>Payment:</strong> {selectedOrder.payment}</p>
                 <p><strong>Original Price:</strong> ${selectedOrder.originalPrice}</p>
                 <p><strong>Total Discount:</strong> ${selectedOrder.totalDiscount}</p>
@@ -178,34 +190,33 @@ const OrderItem = ({ selectedTable, onBack, url = `http://localhost:8080` }) => 
               </div>
 
               <h3 className="text-lg font-semibold mb-2">Ordered Dishes:</h3>
-              <div className="flex flex-col gap-4">
-                {Array.isArray(selectedOrder.orderItems) && selectedOrder.orderItems.length > 0 ? (
-                  selectedOrder.orderItems.map((item, index) => (
-                    <div key={index} className="flex items-center border-b border-gray-200 pb-2">
-                      <img
-                        src={`http://localhost:8080/images/${item.dish.image}`}
-                        alt={item.dish.name}
-                        className="w-16 h-16 rounded-lg object-cover mr-4"
-                      />
-                      <div>
-                        <p className="font-semibold">{item.dish.name}</p>
-                        <p className="text-gray-600">Quantity: {item.quantity}</p>
-                      </div>
-                      <p className="ml-auto font-semibold">${item.dish.price}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p>No items found in this order.</p>
-                )}
-              </div>
+              {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 ? (
+                <Table>
+                  <TableBody>
+                    {selectedOrder.orderItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <img
+                            src={`http://localhost:8080/images/${item.dish.image}`}
+                            alt={item.dish.name}
+                            className="w-16 h-16 rounded-lg object-cover"
+                          />
+                        </TableCell>
+                        <TableCell>{item.dish.name}</TableCell>
+                        <TableCell>Quantity: {item.quantity}</TableCell>
+                        <TableCell>${item.dish.price}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p>No items found in this order.</p>
+              )}
 
               <div className="flex justify-end mt-6">
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
-                  onClick={handleCloseModal}
-                >
+                <Button variant="contained" color="secondary" onClick={handleCloseModal}>
                   Close
-                </button>
+                </Button>
               </div>
             </div>
           </div>

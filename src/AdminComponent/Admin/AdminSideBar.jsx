@@ -14,7 +14,7 @@ import { pink, orange } from '@mui/material/colors';
 
 // Define the menu items
 const menu = [
-  { title: "Dashboard", icon: <Dashboard sx={{ color: orange[500] }} />, path: "/" },
+  { title: "Dashboard", icon: <Dashboard sx={{ color: orange[500] }} />, path: "/dashboard" },
   { title: "Orders", icon: <ShoppingBag sx={{ color: orange[500] }} />, path: "/orders" },
   { title: "Menu", icon: <ShopTwoIcon sx={{ color: orange[500] }}/>, path: "/menu" },
   { title: "Food Category", icon: <CategoryIcon sx={{ color: orange[500] }}/>, path: "/category" },
@@ -22,7 +22,7 @@ const menu = [
   { title: "Events", icon: <EventIcon sx={{ color: orange[500] }}/>, path: "/event" },
   { title: "Details", icon: <AdminPanelSettingsIcon sx={{ color: orange[500] }}/>, path: "/details" },
   { title: "Tables",icon: <TableChartIcon sx={{ color: orange[500] }}/>, path:"/tables"},
-  { title: "logout", icon: <LogoutIcon sx={{ color: orange[500] }}/>, path: "/login" },
+  { title: "Logout", icon: <LogoutIcon sx={{ color: orange[500] }}/>, path: "/login" },
 ];
 
 export const AdminSideBar = ({ handleClose }) => {

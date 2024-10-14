@@ -16,11 +16,10 @@ const RestaurantDetails = () => {
   return (
     <div className='lg:px-20 px-5 pb-10'>
       <div className='py-5 flex justify-center items-center gap-5'>
-        <h1 className='text-2xl lg:text-7xl text-center font-bold p-5'>Viet Nam Fast Food</h1>
+        <h1 className='text-2xl lg:text-7xl text-center font-bold p-5 text-orange-600'>Viet Nam Fast Food</h1>
         <div>
           <Button 
-            color={isOpen ? "primary" : "error"} // Toggle color based on isOpen
-            className='py-[1rem] px-[2rem]' 
+            className={`py-[1rem] px-[2rem] ${isOpen ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`} // Tailwind colors for button
             variant='contained'
             onClick={handleRestaurantStatus} 
             size='large'
@@ -108,16 +107,16 @@ const RestaurantDetails = () => {
                   <p className='w-48 text-gray-800'>Social</p>
                   <div className='flex text-gray-950 items-center pb-3 gap-2'>
                     <span className='pr-5'>-</span>
-                    <a href="/">
+                    <a href="/" className='hover:text-orange-500'>
                       <InstagramIcon sx={{ fontSize: "3rem" }} />
                     </a>
-                    <a href="/">
+                    <a href="/" className='hover:text-orange-500'>
                       <TwitterIcon sx={{ fontSize: "3rem" }} />
                     </a>
-                    <a href="/">
+                    <a href="/" className='hover:text-orange-500'>
                       <LinkedInIcon sx={{ fontSize: "3rem" }} />
                     </a>
-                    <a href="/">
+                    <a href="/" className='hover:text-orange-500'>
                       <FacebookIcon sx={{ fontSize: "3rem" }} />
                     </a>
                   </div>

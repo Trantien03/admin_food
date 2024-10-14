@@ -4,28 +4,28 @@ import OrderTable from './OrderTable';
 
 const orderStatus = [
   { label: "Pending", value: "PENDING" },
-  { label: "Completed", value: "COMPLETED" },
+  { label: "Paid", value: "PAID" },
   { label: "All", value: "ALL" }
 ];
 
 const Orders = () => {
-  const [filterValue, setFilterValue] = useState("ALL"); // Set a default value
+  const [filterValue, setFilterValue] = useState("ALL"); // Giá trị mặc định là "ALL"
 
   const handleFilter = (e) => {
-    setFilterValue(e.target.value); // Update state with the selected value
+    setFilterValue(e.target.value); // Cập nhật trạng thái khi chọn giá trị lọc
   };
 
   return (
     <div className='px-2'>
       <Card className='p-5'>
         <Typography sx={{ paddingBottom: "1rem" }} variant='h5'>
-          Order Status        
-        </Typography>       
+          Order Status
+        </Typography>
         <FormControl>
-          <RadioGroup 
-            onChange={handleFilter} // Use onChange instead of onClick
-            row 
-            name='category' 
+          <RadioGroup
+            onChange={handleFilter}
+            row
+            name='category'
             value={filterValue}>
             {orderStatus.map((item) => (
               <FormControlLabel
@@ -33,13 +33,14 @@ const Orders = () => {
                 value={item.value}
                 control={<Radio />}
                 label={item.label}
-                sx={{ color: "gray" }} // Ensure this matches your theme
+                sx={{ color: "gray" }}
               />
             ))}
           </RadioGroup>
-        </FormControl> 
+        </FormControl>
       </Card>
-      <OrderTable/>
+      {/* Truyền filterValue vào OrderTable */}
+      <OrderTable filterValue={filterValue} />
     </div>
   );
 };

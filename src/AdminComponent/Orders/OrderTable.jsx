@@ -19,8 +19,9 @@ import {
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const OrderTable = ({ url = `http://localhost:8080` }) => {
+const OrderTable = ({ filterValue, url = `http://localhost:8080` }) => {
   const [orderItems, setOrderItems] = useState([]); // Quản lý danh sách đơn hàng
+  const [filteredOrders, setFilteredOrders] = useState([]); // Quản lý danh sách đơn hàng đã lọc
   const [selectedOrder, setSelectedOrder] = useState(null); // Đơn hàng đã chọn để cập nhật
   const [openModal, setOpenModal] = useState(false); // Điều khiển modal
   const [anchorEl, setAnchorEl] = useState(null); // Để mở Menu thay đổi trạng thái
@@ -41,6 +42,27 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
     }
   };
 
+  // Lọc đơn hàng dựa trên filterValue
+  useEffect(() => {
+    if (filterValue === "ALL") {
+      setFilteredOrders(orderItems);
+    } else {
+      setFilteredOrders(orderItems.filter((order) => order.status === filterValue));
+    }
+  }, [filterValue, orderItems]);
+
+  // Lấy danh sách đơn hàng khi component mount
+  useEffect(() => {
+    if (url) {
+      fetchAllOrders();
+    }
+  }, [url]);
+
+  // Mở modal và lấy chi tiết đơn hàng theo ID
+  const handleOpenModal = (orderId) => {
+    fetchOrderById(orderId);
+  };
+
   // Hàm lấy chi tiết đơn hàng theo ID
   const fetchOrderById = async (orderId) => {
     try {
@@ -55,18 +77,6 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
       console.error("Error fetching order details:", error);
       toast.error("An error occurred while fetching order details");
     }
-  };
-
-  // Lấy danh sách đơn hàng khi component mount
-  useEffect(() => {
-    if (url) {
-      fetchAllOrders();
-    }
-  }, [url]);
-
-  // Mở modal và lấy chi tiết đơn hàng theo ID
-  const handleOpenModal = (orderId) => {
-    fetchOrderById(orderId);
   };
 
   // Hàm đóng Modal
@@ -121,8 +131,8 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {orderItems.length > 0 ? (
-                orderItems.map((order, index) => (
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order, index) => (
                   <TableRow key={index} style={{ cursor: "pointer" }}>
                     <TableCell onClick={() => handleOpenModal(order.id)}>{order.billNumber}</TableCell>
                     <TableCell align="left" onClick={() => handleOpenModal(order.id)}>{order.restaurantTable.nameTable}</TableCell>
@@ -204,21 +214,23 @@ const OrderTable = ({ url = `http://localhost:8080` }) => {
                     />
                     <div>
                       <p className="font-semibold">{item.dish.name}</p>
-                      <p className="text-gray-600">Quantity: {item.quantity}</p>
+                      <p>
+                        <strong>Price:</strong> ${item.price} | <strong>Quantity:</strong>{" "}
+                        {item.quantity}
+                      </p>
                     </div>
-                    <p className="ml-auto font-semibold">${item.dish.price}</p>
                   </div>
                 ))}
               </div>
-
-              <div className="flex justify-end mt-6">
-                  <button
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
-                    onClick={handleCloseModal}
-                  >
-                    Close
-                  </button>
-                </div>
+              <div className="text-center mt-4">
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </Modal>
